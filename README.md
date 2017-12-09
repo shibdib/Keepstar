@@ -5,7 +5,7 @@ https://discord.gg/wD7n6pr To discuss and for support.
 
 Intended to be used with https://github.com/shibdib/Firetail **BUT** can be safely used standalone.
 
-*If you're a Dramiel user check the wiki for how to convert to Keepstar.*
+*If you're a Dramiel or Opux user check the wiki for how to convert to Keepstar.*
 
 What It Does
 -

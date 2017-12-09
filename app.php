@@ -24,7 +24,11 @@ foreach(glob(BASEDIR . "/libraries/*.php") as $lib)
 
 //Ensure DB Is Created
 createAuthDb();
-
+//Convert mysql if needed
+if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')){
+    require_once(BASEDIR . "/tools/mysqlConverter.php");
+    convertMysql($config);
+}
 
 
 // Routes

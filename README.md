@@ -1,5 +1,10 @@
-# EVE-Discord-Auth
-CREST Auther for Discord using EVE-Discord as intermediary
+# Keepstar
+EVE Online SSO Auth For Discord
 
 
-For use with https://github.com/shibdib/EVE-Discord-Bot
+Intended to be used with https://github.com/shibdib/Firetail
+
+
+---
+
+Credits: Karbowiak for the framework this was built on.

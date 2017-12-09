@@ -8,6 +8,7 @@ require_once(BASEDIR . "/config/config.php");
 require_once(BASEDIR . "/vendor/autoload.php");
 
 use RestCord\DiscordClient;
+use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
 
 $log = new Logger('DScan');

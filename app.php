@@ -94,6 +94,19 @@ $app->get("/auth/", function() use ($app, $config, $log) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
             $role = null;
+            if ($id == 1234) {
+                foreach ($roles as $role) {
+                    if ($role->name == $authGroup["role"]) {
+                        break;
+                    }
+                }
+                $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
+                if ((int)$config['discord']['logChannel'] !== 0) {
+                    $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
+                }
+                $access[] = 'character';
+                continue;
+            }
             if ($id == $characterID) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup["role"]) {
@@ -102,10 +115,10 @@ $app->get("/auth/", function() use ($app, $config, $log) {
                 }
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
-                    $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role  $role->name"]);
+                    $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
                 $access[] = 'character';
-                break;
+                continue;
             }
             if ($id == $allianceID) {
                 foreach ($roles as $role) {
@@ -118,8 +131,8 @@ $app->get("/auth/", function() use ($app, $config, $log) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
                 $access[] = 'alliance';
-                break;
-            } 
+                continue;
+            }
             if ($id == $corporationID) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup["role"]) {
@@ -131,7 +144,7 @@ $app->get("/auth/", function() use ($app, $config, $log) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
                 $access[] = 'corp';
-                break;
+                continue;
             }
         }
 

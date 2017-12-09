@@ -19,23 +19,23 @@ function convertMysql($config)
         // Close the prepared statement.
         $stmt->close();
 
-        $x = 0;
-        while ($user = mysqli_fetch_array($result, MYSQLI_NUM)) {
-            if (!isset($user[$x]['characterID'])) {break;}
+        while ($user = mysqli_fetch_object($result)) {
+            if (!isset($user->characterID)) {break;}
             $access = array();
-            if ($user[$x]['role'] === "corp") {
+            if ($user->role === "corp") {
                 $access[] = 'corp';
-            } else if ($user[$x]['role'] === "corp/ally") {
+            } else if ($user->role === "corp/ally") {
                 $access[] = 'corp';
                 $access[] = 'alliance';
-            } else if ($user[$x]['role'] === "ally") {
+            } else if ($user->role === "ally") {
                 $access[] = 'alliance';
             } else {
+                $access[] = 'corp';
+                $access[] = 'alliance';
                 $access[] = 'character';
             }
             $accessList = json_encode($access);
-            insertUser($user[$x]['characterID'], $user[$x]['discordID'], $accessList);
-            $x++;
+            insertUser($user->characterID, $user->discordID, $accessList);
         }
         if (!file_exists(__DIR__ . '.blocker')) {
             touch(__DIR__ . '.blocker');

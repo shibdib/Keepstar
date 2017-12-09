@@ -26,11 +26,11 @@ foreach ($users as $user){
     if (in_array('corp', $type, true)) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
-            if ($id !== $characterData->corporation_id) {
+            if ($id !== $characterData['corporation_id']) {
                 foreach ($roles as $role) {
                     if ($role->name === $authGroup["role"]) {
                         $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
-                        if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$characterData->name has been removed from the role $role->name"]);}
+                        if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the role $role->name"]);}
                         if (($key = array_search('corp', $type)) !== false) {
                             unset($type[$key]);
                         }
@@ -43,11 +43,11 @@ foreach ($users as $user){
     if (in_array('alliance', $type, true)) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
-            if ($id !== $characterData->corporation_id) {
+            if ($id !== $characterData['alliance_id']) {
                 foreach ($roles as $role) {
                     if ($role->name === $authGroup["role"]) {
                         $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
-                        if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$characterData->name has been removed from the role $role->name"]);}
+                        if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the role $role->name"]);}
                         if (($key = array_search('alliance', $type)) !== false) {
                             unset($type[$key]);
                         }
@@ -64,7 +64,7 @@ foreach ($users as $user){
                 foreach ($roles as $role) {
                     if ($role->name === $authGroup["role"]) {
                         $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
-                        if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$characterData->name has been removed from the role $role->name"]);}
+                        if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the role $role->name"]);}
                         if (($key = array_search('character', $type)) !== false) {
                             unset($type[$key]);
                         }

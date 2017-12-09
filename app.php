@@ -68,11 +68,12 @@ $app->get("/auth/", function() use ($app, $config) {
 
         $characterID = $data->CharacterID;
         $characterData = characterDetails($characterID);
-        $corporationID = $characterData->corporation_id;
-        if (!isset($characterData->alliance_id)) {
+        $corporationID = $characterData['corporation_id'];
+        $eveName = $characterData['name'];
+        if (!isset($characterData['alliance_id'])) {
             $allianceID = 1;
         } else {
-            $allianceID = $characterData->alliance_id;
+            $allianceID = $characterData['alliance_id'];
         }
 
         // Now check if the person is in a corp or alliance on the blue / allowed list
@@ -89,7 +90,7 @@ $app->get("/auth/", function() use ($app, $config) {
                     }
                 }
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
-                if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$characterData->name has been added to the role  $role->name"]);}
+                if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role  $role->name"]);}
                 $access[] = 'character';
                 break;
             } else if ($id == $allianceID) {
@@ -99,7 +100,7 @@ $app->get("/auth/", function() use ($app, $config) {
                     }
                 }
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
-                if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$characterData->name has been added to the role $role->name"]);}
+                if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);}
                 $access[] = 'alliance';
                 break;
             } else if ($id == $corporationID)
@@ -109,7 +110,7 @@ $app->get("/auth/", function() use ($app, $config) {
                     }
                 }
             if ($role) $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
-            if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$characterData->name has been added to the role $role->name"]);}
+            if ((int)$config['discord']['logChannel'] !== 0) { $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);}
             $access[] = 'corp';
             break;
         }

@@ -10,9 +10,6 @@ function convertMysql($config)
 
     if ($stmt = $mysqli->prepare("SELECT * FROM authUsers WHERE active='yes'")) {
 
-        // Bind the variables to the parameter as strings.
-        $stmt->bind_param('s', $authCode);
-
         // Execute the statement.
         $stmt->execute();
 

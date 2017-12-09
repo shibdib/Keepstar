@@ -8,13 +8,6 @@ $config["sso"] = array(
     "callbackURL" => "", // Include trailing / (Will be the url_to_the_index.com/auth/)
 );
 
-$config["db"] = array(
-    "url" => "",
-    "user" => "",
-    "pass" => "",
-    "dbname" => ""
-);
-
 $config["discord"] = array(
     "guildId" => 12345, //Get the guild ID for your discord server
     "logChannel" => 0, //The channel ID for where you want the bot to report auth stuff (leave as 0 to disable)

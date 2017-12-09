@@ -93,3 +93,24 @@ function dbQueryRow($query, array $params = array())
     }
     return null;
 }
+
+function dbQueryField($query, $field, array $params = array(), $db = null)
+{
+    $pdo = openDB($db);
+    if ($pdo == NULL) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
+
+    if (count($result) == 0) {
+        return null;
+    }
+
+    $resultRow = $result[0];
+    return $resultRow[$field];
+}

@@ -61,6 +61,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
         if (!in_array($config['discord']['guildId'], $guilds, false)) {
             $app->render("notinserver.twig", array("discordLink" => $config['discord']['inviteLink']));
+            return;
         }
         $code = $_COOKIE['eveCode'];
 

@@ -19,6 +19,7 @@ foreach(glob(BASEDIR . "/libraries/*.php") as $lib)
     require_once($lib);
 
 //Start Auth
+$log->notice("AUTHCHECK INITIATED");
 $users = getUsers();
 $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
 foreach ($users as $user){

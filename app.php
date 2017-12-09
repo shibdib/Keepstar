@@ -6,7 +6,6 @@ error_reporting(E_ALL);
 
 require_once(BASEDIR . "/config/config.php");
 require_once(BASEDIR . "/vendor/autoload.php");
-include 'discord.php';
 
 use RestCord\DiscordClient;
 use Monolog\Logger;

@@ -101,7 +101,6 @@ $app->get("/auth/", function() use ($app, $config, $log) {
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role  $role->name"]);
                 }
-                $log->notice("$eveName has been added to the role  $role->name");
                 $access[] = 'character';
                 break;
             }
@@ -115,7 +114,6 @@ $app->get("/auth/", function() use ($app, $config, $log) {
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
-                $log->notice("$eveName has been added to the role  $role->name");
                 $access[] = 'alliance';
                 break;
             } 
@@ -129,7 +127,6 @@ $app->get("/auth/", function() use ($app, $config, $log) {
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
-                $log->notice("$eveName has been added to the role  $role->name");
                 $access[] = 'corp';
                 break;
             }
@@ -141,7 +138,13 @@ $app->get("/auth/", function() use ($app, $config, $log) {
         // Insert it all into the db
         insertUser($characterID, (int)$_SESSION['user_id'], $accessList);
 
-        $app->render("authed.twig");
+        if (count($access) > 0) {
+            $log->notice("$eveName has been added to the role $role->name.");
+            $app->render("authed.twig");
+        } else {
+            $log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");
+            $app->render("norole.twig");
+        }
     }
 });
 

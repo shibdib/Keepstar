@@ -44,7 +44,7 @@ foreach ($users as $user){
                         if (($key = array_search('corp', $type)) !== false) {
                             unset($type[$key]);
                         }
-                        break;
+                        break 3;
                     }
                 }
             }
@@ -64,7 +64,7 @@ foreach ($users as $user){
                         if (($key = array_search('alliance', $type)) !== false) {
                             unset($type[$key]);
                         }
-                        break;
+                        break 3;
                     }
                 }
             }
@@ -84,7 +84,7 @@ foreach ($users as $user){
                         if (($key = array_search('character', $type)) !== false) {
                             unset($type[$key]);
                         }
-                        break;
+                        break 3;
                     }
                 }
             }

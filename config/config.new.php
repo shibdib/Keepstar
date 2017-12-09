@@ -12,10 +12,10 @@ $config["discord"] = array(
     "guildId" => 12345, //Get the guild ID for your discord server
     "logChannel" => 0, //The channel ID for where you want the bot to report auth stuff (leave as 0 to disable)
     "inviteLink" => "", //Make sure it's set to never expire and set to a public channel.
-    "botToken" => "", //Must be the firetail bot in your server
-    "clientId" => "", //Must be the firetail bot in your server
-    "clientSecret" => "", //Must be the firetail bot in your server
-    "redirectUri" => "" //Must be the firetail bot in your server (same as SSO callbackURL)
+    "botToken" => "", //The bot must be a member of your server
+    "clientId" => "", //The bot must be a member of your server
+    "clientSecret" => "", //The bot must be a member of your server
+    "redirectUri" => "" //The bot must be a member of your server (same as SSO callbackURL)
 );
 
 $config["groups"] = array(

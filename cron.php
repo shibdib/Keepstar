@@ -28,7 +28,7 @@ foreach ($users as $user){
     $discordId = $user['discordID'];
     $type = (array)$user['groups'];
     $id = $user['id'];
-    $characterData = characterDetails($characterID);
+    $characterData = characterDetails($characterId);
     if (in_array('corp', $type, true)) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];

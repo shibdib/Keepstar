@@ -6,6 +6,17 @@ function insertUser($characterID, $discordID, $accessList)
     return null;
 }
 
+function getUsers()
+{
+    return dbQuery('SELECT * FROM authed');
+}
+
+function deleteUser($id)
+{
+    dbQueryRow('DELETE from authed WHERE `id` = :id', array(':id' => $id));
+    return null;
+}
+
 function openDB()
 {
     $db = __DIR__ . '/database/auth.sqlite';
@@ -34,7 +45,7 @@ function dbExecute($query, array $params = array())
     }
 
     // This is ugly, but, yeah..
-    if (strstr($query, ';')) {
+    if (false !== strpos($query, ';')) {
         $explodedQuery = explode(';', $query);
         $stmt = null;
         foreach ($explodedQuery as $newQry) {
@@ -47,4 +58,38 @@ function dbExecute($query, array $params = array())
         $stmt->execute($params);
         $stmt->closeCursor();
     }
+}
+
+function dbQuery($query, array $params = array())
+{
+    $pdo = openDB();
+    if ($pdo === NULL) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
+
+    return $result;
+}
+function dbQueryRow($query, array $params = array())
+{
+    $pdo = openDB();
+    if ($pdo == NULL) {
+        return null;
+    }
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmt->closeCursor();
+
+    if (count($result) >= 1) {
+        return $result[0];
+    }
+    return null;
 }

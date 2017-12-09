@@ -17,6 +17,7 @@ $config["db"] = array(
 
 $config["discord"] = array(
     "guildId" => 12345, //Get the guild ID for your discord server
+    "logChannel" => 0, //The channel ID for where you want the bot to report auth stuff (leave as 0 to disable)
     "inviteLink" => "", //Make sure it's set to never expire and set to a public channel.
     "botToken" => "", //Must be the firetail bot in your server
     "clientId" => "", //Must be the firetail bot in your server

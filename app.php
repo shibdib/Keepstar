@@ -7,9 +7,9 @@ error_reporting(E_ALL);
 require_once(BASEDIR . "/config/config.php");
 require_once(BASEDIR . "/vendor/autoload.php");
 
-use RestCord\DiscordClient;
-use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
+use Monolog\Logger;
+use RestCord\DiscordClient;
 
 $log = new Logger('DScan');
 $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/Keepstar.log', Logger::NOTICE));
@@ -19,24 +19,24 @@ $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware());
 $app->view(new \Slim\Views\Twig());
 
 // Load libraries
-foreach(glob(BASEDIR . "/libraries/*.php") as $lib)
+foreach (glob(BASEDIR . "/libraries/*.php") as $lib)
     require_once($lib);
 
 //Ensure DB Is Created
 createAuthDb();
 //Convert mysql if needed
-if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')){
+if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')) {
     require_once(BASEDIR . "/tools/mysqlConverter.php");
     convertMysql($config);
 }
 
 
 // Routes
-$app->get("/", function() use ($app, $config) {
+$app->get("/", function () use ($app, $config) {
     $app->render("index.twig", array("crestURL" => "https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=" . $config['sso']['callbackURL'] . "&client_id=" . $config['sso']['clientID']));
 });
 
-$app->get("/auth/", function() use ($app, $config, $log) {
+$app->get("/auth/", function () use ($app, $config, $log) {
     if (isset($_GET['code']) && !isset($_COOKIE["eveCode"])) {
         $cookie_name = "eveCode";
         $cookie_value = $_GET['code'];
@@ -48,18 +48,20 @@ $app->get("/auth/", function() use ($app, $config, $log) {
     if (!isset($_GET['code'])) {
         // If we don't have a code yet, we need to make the link
         $scopes = 'guilds.join%20identify%20guilds';
-        $discordLink = url($config['discord']['clientId'],$config['discord']['redirectUri'],$scopes);
+        $discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
         $app->render("discord.twig", array("discordLink" => $discordLink));
 
     } else {
         // If we do have a code, use it to get a token
         $code = $_GET['code'];
-        init($code,$config['discord']['redirectUri'],$config['discord']['clientId'],$config['discord']['clientSecret']);
+        init($code, $config['discord']['redirectUri'], $config['discord']['clientId'], $config['discord']['clientSecret']);
         get_user();
         $guilds = get_guilds();
 
         $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
-        //$restcord->invite->acceptInvite(['invite.code' => $config['discord']['inviteLink']]);
+        if (!in_array($config['discord']['guildId'], $guilds, false)) {
+            $app->render("notinserver.twig", array("discordLink" => $config['discord']['inviteLink']));
+        }
         $code = $_COOKIE['eveCode'];
 
         $tokenURL = "https://login.eveonline.com/oauth/token";

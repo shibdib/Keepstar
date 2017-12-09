@@ -36,8 +36,8 @@ function convertMysql($config)
             $accessList = json_encode($access);
             insertUser($user->characterID, $user->discordID, $accessList);
         }
-        if (!file_exists(__DIR__ . 'mysql.blocker')) {
-            touch(__DIR__ . 'mysql.blocker');
+        if (!file_exists(__DIR__ . '/.blocker')) {
+            touch(__DIR__ . '/.blocker');
         }
     }
     return null;

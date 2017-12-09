@@ -22,7 +22,7 @@ foreach ($users as $user){
     $discordId = $user['discordID'];
     $type = (array)$user['groups'];
     $id = $user['id'];
-    $characterData = json_decode((getData("https://esi.tech.ccp.is/latest/characters/{$characterId}")));
+    $characterData = json_decode(characterDetails($characterID));
     if (in_array('corp', $type, true)) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];

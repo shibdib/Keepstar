@@ -67,7 +67,7 @@ $app->get("/auth/", function() use ($app, $config) {
         $data = json_decode(sendData($verifyURL, array(), array("Authorization: Bearer {$accessToken}")));
 
         $characterID = $data->CharacterID;
-        $characterData = json_decode((getData("https://esi.tech.ccp.is/latest/characters/{$characterID}")));
+        $characterData = json_decode(characterDetails($characterID));
         $corporationID = $characterData->corporation_id;
         if (!isset($characterData->alliance_id)) {
             $allianceID = 1;

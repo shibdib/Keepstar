@@ -34,14 +34,8 @@ $app->get("/auth/", function() use ($app, $config) {
         echo "<head><meta http-equiv='refresh' content='0; url=$url' /></head>";
         return;
     }
-    $provider = new \League\OAuth2\Client\Provider\Discord([
-        'clientId'     => $config['discord']['clientId'],
-        'clientSecret' => $config['discord']['clientSecret'],
-        'redirectUri'  => $config['discord']['redirectUri'],
-    ]);
     if (!isset($_GET['code'])) {
         // If we don't have a code yet, we need to make the link
-        $provider->addScopes(['guilds.join', 'identify']);
         $scopes = 'guilds.join%20identify%20guilds';
         $discordLink = url($config['discord']['clientId'],$config['discord']['redirectUri'],$scopes);
         $app->render("discord.twig", array("discordLink" => $discordLink));

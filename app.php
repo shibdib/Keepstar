@@ -9,6 +9,11 @@ require_once(BASEDIR . "/vendor/autoload.php");
 include 'discord.php';
 
 use RestCord\DiscordClient;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+
+$log = new Logger('DScan');
+$log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/Keepstar.log', Logger::NOTICE));
 
 $app = new \Slim\Slim($config["slim"]);
 $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware());
@@ -18,6 +23,9 @@ $app->view(new \Slim\Views\Twig());
 foreach(glob(BASEDIR . "/libraries/*.php") as $lib)
     require_once($lib);
 
+//Ensure DB Is Created
+createAuthDb();
+
 
 
 // Routes
@@ -25,7 +33,7 @@ $app->get("/", function() use ($app, $config) {
     $app->render("index.twig", array("crestURL" => "https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=" . $config['sso']['callbackURL'] . "&client_id=" . $config['sso']['clientID']));
 });
 
-$app->get("/auth/", function() use ($app, $config) {
+$app->get("/auth/", function() use ($app, $config, $log) {
     if (isset($_GET['code']) && !isset($_COOKIE["eveCode"])) {
         $cookie_name = "eveCode";
         $cookie_value = $_GET['code'];
@@ -93,6 +101,7 @@ $app->get("/auth/", function() use ($app, $config) {
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role  $role->name"]);
                 }
+                $log->notice("$eveName has been added to the role  $role->name");
                 $access[] = 'character';
                 break;
             }
@@ -106,6 +115,7 @@ $app->get("/auth/", function() use ($app, $config) {
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
+                $log->notice("$eveName has been added to the role  $role->name");
                 $access[] = 'alliance';
                 break;
             } 
@@ -119,6 +129,7 @@ $app->get("/auth/", function() use ($app, $config) {
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
                 }
+                $log->notice("$eveName has been added to the role  $role->name");
                 $access[] = 'corp';
                 break;
             }

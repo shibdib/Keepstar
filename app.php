@@ -73,12 +73,12 @@ $app->get("/auth/", function() use ($app, $config) {
         $data = json_decode(sendData($verifyURL, array(), array("Authorization: Bearer {$accessToken}")));
 
         $characterID = $data->CharacterID;
-        $characterData = json_decode(json_encode(new SimpleXMLElement(getData("https://api.eveonline.com/eve/CharacterInfo.xml.aspx?characterID={$characterID}"))));
-        $corporationID = $characterData->result->corporationID;
-        if (!isset($characterData->result->allianceID)) {
+        $characterData = json_decode((getData("https://esi.tech.ccp.is/latest/characters/{$characterID}")));
+        $corporationID = $characterData->corporation_id;
+        if (!isset($characterData->alliance_id)) {
             $allianceID = 1;
         } else {
-            $allianceID = $characterData->result->allianceID;
+            $allianceID = $characterData->alliance_id;
         }
 
         // Now check if the person is in a corp or alliance on the blue / allowed list

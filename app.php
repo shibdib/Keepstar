@@ -10,7 +10,7 @@ include 'discord.php';
 
 use RestCord\DiscordClient;
 use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
 
 $log = new Logger('DScan');
 $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/Keepstar.log', Logger::NOTICE));

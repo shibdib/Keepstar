@@ -8,7 +8,7 @@ require_once(BASEDIR . "/config/config.php");
 require_once(BASEDIR . "/vendor/autoload.php");
 
 use RestCord\DiscordClient;
-use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
 
 $log = new Logger('DScan');
 $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/KeepstarCron.log', Logger::NOTICE));

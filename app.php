@@ -132,8 +132,11 @@ $app->get("/auth/", function() use ($app, $config, $log) {
             }
         }
 
+        // Make the json access list
+        $accessList = json_encode($access);
+
         // Insert it all into the db
-        insertUser($characterID, (int)$_SESSION['user_id'], $access);
+        insertUser($characterID, (int)$_SESSION['user_id'], $accessList);
 
         if (count($access) > 0) {
             $log->notice("$eveName has been added to the role $role->name.");

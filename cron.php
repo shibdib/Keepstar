@@ -26,7 +26,7 @@ $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guil
 foreach ($users as $user){
     $characterId = $user['characterID'];
     $discordId = $user['discordID'];
-    $type = (array)$user['groups'];
+    $type = json_decode($user['groups'], TRUE);
     $id = $user['id'];
     $characterData = characterDetails($characterId);
     if (in_array('corp', $type, true)) {

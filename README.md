@@ -8,7 +8,7 @@ Intended to be used with https://github.com/shibdib/Firetail **BUT** can be safe
 What It Does
 -
 This program will host a web page that members of your discord server can visit to be assigned roles based off of
-corporation, alliance, and player specific roles. It will then insure the player remains in these roles and remove them 
+corporation, alliance, and player specific roles. It will then ensure the player remains in these roles and remove them 
 if the players status changes (via a cron job).
 
 

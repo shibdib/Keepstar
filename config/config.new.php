@@ -15,6 +15,7 @@ $config["discord"] = array(
     "botToken" => "", //Must be the firetail bot in your server
     "clientId" => "", //Must be the firetail bot in your server
     "clientSecret" => "", //Must be the firetail bot in your server
+    "redirectUri" => "" //Must be the firetail bot in your server (same as SSO callbackURL)
 );
 
 $config["groups"] = array(

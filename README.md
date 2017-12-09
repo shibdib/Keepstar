@@ -29,6 +29,10 @@ Known Issues
 - Roles added manually are not removed (yet...)
 - Not compatible with the old Dramiel database (yet?)
 
+Gratuity
+-
+Like the features? Send 'Mr Twinkie' some isk and a mail letting me know you're a fan!
+
 ---
 
 Credits

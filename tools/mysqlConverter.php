@@ -21,7 +21,6 @@ function convertMysql($config)
 
         while ($user = mysqli_fetch_object($result)) {
             if (!isset($user->characterID)) {break;}
-            $access = array();
             if ($user->role === "corp") {
                 $access[] = 'corp';
             } else if ($user->role === "corp/ally") {
@@ -37,8 +36,8 @@ function convertMysql($config)
             $accessList = json_encode($access);
             insertUser($user->characterID, $user->discordID, $accessList);
         }
-        if (!file_exists(__DIR__ . '.blocker')) {
-            touch(__DIR__ . '.blocker');
+        if (!file_exists(__DIR__ . 'mysql.blocker')) {
+            touch(__DIR__ . 'mysql.blocker');
         }
     }
     return null;

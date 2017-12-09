@@ -10,8 +10,8 @@ function createAuthDb()
             BEGIN;
             CREATE TABLE IF NOT EXISTS `authed` (
 	            `id`	INTEGER PRIMARY KEY AUTOINCREMENT,
-	            `characterID`	INTEGER NOT NULL,
-	            `discordID`	INTEGER NOT NULL,
+	            `characterID`	INTEGER NOT NULL UNIQUE,
+	            `discordID`	INTEGER NOT NULL UNIQUE,
 	            `groups`	TEXT NOT NULL
             );
             COMMIT;');

@@ -11,6 +11,11 @@ function getUsers()
     return dbQuery('SELECT * FROM authed');
 }
 
+function getUser($discordId)
+{
+    return dbQuery('SELECT * FROM authed WHERE `discordID` = :discordID', array(':discordID' => $discordId));
+}
+
 function deleteUser($id)
 {
     dbQueryRow('DELETE from authed WHERE `id` = :id', array(':id' => $id));

@@ -19,7 +19,7 @@ Requirements
 - PHP7 
 - Webserver (Apache/NGINX/Whatever You're Comfortable With)
 - A domain name is highly recommended
-- An EVE Online Omega Account (Required to make an application)
+- An EVE Online Omega Account (Required to make the application, alphas can still use it)
 
 Install
 -

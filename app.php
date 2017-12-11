@@ -57,9 +57,12 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         init($code, $config['discord']['redirectUri'], $config['discord']['clientId'], $config['discord']['clientSecret']);
         get_user();
         $guilds = get_guilds();
-
+        $guildIds = [];
+        foreach ($guilds as $guild) {
+            array_push($guildIds, $guild['id']);
+        }
         $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
-        if (!in_array($config['discord']['guildId'], $guilds, false)) {
+        if (!in_array($config['discord']['guildId'], $guildIds, false)) {
             $app->render("notinserver.twig", array("discordLink" => $config['discord']['inviteLink']));
             return;
         }

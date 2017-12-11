@@ -1,7 +1,7 @@
 # Keepstar
 EVE Online SSO Auth For Discord
 
-https://discord.gg/wD7n6pr To discuss and for support.
+https://discord.gg/ZWmzTP3 To discuss and for support.
 
 Intended to be used with https://github.com/shibdib/Firetail **BUT** can be safely used standalone.
 

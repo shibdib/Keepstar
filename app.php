@@ -68,6 +68,9 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         }
         $code = $_COOKIE['eveCode'];
 
+        //Make sure bots nick is set
+        if (isset($config['discord']['botNick'])) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);}
+
         $tokenURL = "https://login.eveonline.com/oauth/token";
         $base64 = base64_encode($config["sso"]["clientID"] . ":" . $config["sso"]["secretKey"]);
 

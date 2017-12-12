@@ -21,6 +21,10 @@ foreach(glob(BASEDIR . "/libraries/*.php") as $lib)
 
 //Start Auth
 $log->notice("AUTHCHECK INITIATED");
+
+//Make sure bots nick is set
+if (isset($config['discord']['botNick'])) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);}
+
 $users = getUsers();
 $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
 foreach ($users as $user){
@@ -30,7 +34,7 @@ foreach ($users as $user){
     $id = $user['id'];
     $characterData = characterDetails($characterId);
     $eveName = $characterData['name'];
-    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $eveName]);}
+    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $eveName]);}
     if (in_array('corp', $type, true)) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];

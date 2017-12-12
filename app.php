@@ -109,7 +109,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $eveName]);}
+                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'character';
                 continue;
@@ -123,7 +123,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $eveName]);}
+                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'character';
                 continue;
@@ -137,7 +137,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $eveName]);}
+                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'alliance';
                 continue;
@@ -151,7 +151,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $eveName]);}
+                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'corp';
                 continue;
@@ -163,14 +163,13 @@ $app->get("/auth/", function () use ($app, $config, $log) {
 
         // Insert it all into the db
         insertUser($characterID, (int)$_SESSION['user_id'], $accessList);
-
-        $eveName = $characterData['name']; // Because it sometimes forgets?
+        $discordId = $_SESSION['user_id'];
 
         if (count($access) > 0) {
-            $log->notice("$eveName has been added to the role $role->name.");
+            if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
             $app->render("authed.twig");
         } else {
-            $log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");
+            if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
             $app->render("norole.twig");
         }
     }

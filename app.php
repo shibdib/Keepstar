@@ -102,7 +102,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         // Whatever ID matches whatever group, they get added to. Discord role ordering decides what they can and can't see
         $access = array();
         $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
-        if ($config['discord']['enforceInGameName'] && (int)$currentGuild['owner_id'] !== (int)$_SESSION['user_id']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
+        if ($config['discord']['enforceInGameName'] && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
             $role = null;

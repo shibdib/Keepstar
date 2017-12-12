@@ -166,13 +166,12 @@ $app->get("/auth/", function () use ($app, $config, $log) {
 
         // Insert it all into the db
         insertUser($characterID, (int)$_SESSION['user_id'], $accessList);
-        $discordId = $_SESSION['user_id'];
 
         if (count($access) > 0) {
-            if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
+            //if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
             $app->render("authed.twig");
         } else {
-            if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
+            //if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
             $app->render("norole.twig");
         }
     }

@@ -34,7 +34,8 @@ foreach ($users as $user){
     $id = $user['id'];
     $characterData = characterDetails($characterId);
     $eveName = $characterData['name'];
-    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $eveName]);}
+    $currentGuild = $restcord->guild->getGuild(['guild.id' => (int)$config['discord']['guildId']]);
+    if ($config['discord']['enforceInGameName'] && (int)$currentGuild['owner_id'] !== (int)$discordId) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $eveName]);}
     if (in_array('corp', $type, true)) {
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];

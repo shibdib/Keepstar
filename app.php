@@ -66,6 +66,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
             $app->render("notinserver.twig", array("discordLink" => $config['discord']['inviteLink']));
             return;
         }
+
         $code = $_COOKIE['eveCode'];
 
         //Make sure bots nick is set
@@ -90,6 +91,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         $characterData = characterDetails($characterID);
         $corporationID = $characterData['corporation_id'];
         $eveName = $characterData['name'];
+        $currentGuild = $restcord->guild->getGuild(['guild.id' => (int)$config['discord']['guildId']]);
         if (!isset($characterData['alliance_id'])) {
             $allianceID = 1;
         } else {
@@ -100,6 +102,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         // Whatever ID matches whatever group, they get added to. Discord role ordering decides what they can and can't see
         $access = array();
         $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
+        if ($config['discord']['enforceInGameName'] && (int)$currentGuild['owner_id'] !== (int)$_SESSION['user_id']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
             $role = null;
@@ -112,7 +115,6 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'character';
                 continue;
@@ -126,7 +128,6 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'character';
                 continue;
@@ -140,7 +141,6 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'alliance';
                 continue;
@@ -154,7 +154,6 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $restcord->guild->addGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'role.id' => (int)$role->id]);
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been added to the role $role->name"]);
-                    if ($config['discord']['enforceInGameName']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
                 }
                 $access[] = 'corp';
                 continue;

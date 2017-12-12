@@ -61,7 +61,7 @@ $_SESSION['user_avatar'] = $response['avatar'];
 }
 
 // Function to get logged in users guilds information. (guilds scope)
-function get_guilds()
+function get_guilds(/**/)
 {
 $response = $GLOBALS['http']->request('GET', '/api/users/@me/guilds', [
     'headers' => [

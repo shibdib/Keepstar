@@ -27,6 +27,9 @@ if (isset($config['discord']['botNick'])) {
     $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
 }
 
+//Ensure DB Is Created
+createAuthDb();
+
 $users = getUsers();
 $members = $restcord->guild->listGuildMembers(['guild.id' => $config['discord']['guildId'], 'limit' => 1000]);
 $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);

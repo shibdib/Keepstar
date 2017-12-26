@@ -59,7 +59,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         $guilds = get_guilds();
         $guildIds = [];
         foreach ($guilds as $guild) {
-            array_push($guildIds, $guild['id']);
+            $guildIds[] = $guild['id'];
         }
         $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
         if (!in_array($config['discord']['guildId'], $guildIds, false)) {

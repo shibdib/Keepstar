@@ -7,96 +7,103 @@ error_reporting(E_ALL);
 require_once(BASEDIR . "/config/config.php");
 require_once(BASEDIR . "/vendor/autoload.php");
 
-use RestCord\DiscordClient;
-use Monolog\Logger;
 use Monolog\Handler\RotatingFileHandler;
+use Monolog\Logger;
+use RestCord\DiscordClient;
 
 $log = new Logger('DScan');
 $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/KeepstarCron.log', Logger::NOTICE));
 
 $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
 
-foreach(glob(BASEDIR . "/libraries/*.php") as $lib)
+foreach (glob(BASEDIR . "/libraries/*.php") as $lib)
     require_once($lib);
 
 //Start Auth
 $log->notice("AUTHCHECK INITIATED");
 
 //Make sure bots nick is set
-if (isset($config['discord']['botNick'])) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);}
+if (isset($config['discord']['botNick'])) {
+    $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+}
+
+//Ensure DB Is Created
+createAuthDb();
 
 $users = getUsers();
+$members = $restcord->guild->listGuildMembers(['guild.id' => $config['discord']['guildId'], 'limit' => 1000]);
 $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
-foreach ($users as $user){
+$currentGuild = $restcord->guild->getGuild(['guild.id' => (int)$config['discord']['guildId']]);
+foreach ($users as $user) {
     $characterId = $user['characterID'];
     $discordId = $user['discordID'];
     $type = json_decode($user['groups'], TRUE);
     $id = $user['id'];
     $characterData = characterDetails($characterId);
     $eveName = $characterData['name'];
-    $currentGuild = $restcord->guild->getGuild(['guild.id' => (int)$config['discord']['guildId']]);
-    if ($config['discord']['enforceInGameName'] && (int)$currentGuild->owner_id !== (int)$discordId) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $eveName]);}
-    if (in_array('corp', $type, true)) {
-        foreach ($config["groups"] as $authGroup) {
-            $id = $authGroup["id"];
-            if ($id !== $characterData['corporation_id']) {
-                foreach ($roles as $role) {
-                    if ($role->name === $authGroup["role"]) {
-                        $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'role.id' => (int)$role->id]);
-                        if ((int)$config['discord']['logChannel'] !== 0) {
-                            $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the role $role->name"]);
-                            $log->notice("$eveName has been removed from the role $role->name");
-                        }
-                        if (($key = array_search('corp', $type)) !== false) {
-                            unset($type[$key]);
-                        }
-                        break 3;
-                    }
-                }
-            }
+    $exists = False;
+    foreach ($members as $member) {
+        if ($member->user->id === $discordId) {
+            $exists = True;
+            break;
         }
     }
-    if (in_array('alliance', $type, true)) {
+    if (!$exists) {
+        $log->notice("$eveName has been removed from the database as they are no longer a member of the server.");
+        deleteUser($id);
+        continue;
+    }
+    try {
+        $removeTheseRoles = [];
+        $removeTheseRolesName = [];
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
-            if ($id !== $characterData['alliance_id']) {
-                foreach ($roles as $role) {
-                    if ($role->name === $authGroup["role"]) {
-                        $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'role.id' => (int)$role->id]);
-                        if ((int)$config['discord']['logChannel'] !== 0) {
-                            $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the role $role->name"]);
-                            $log->notice("$eveName has been removed from the role $role->name");
-                        }
-                        if (($key = array_search('alliance', $type)) !== false) {
-                            unset($type[$key]);
-                        }
-                        break 3;
-                    }
+            foreach ($roles as $role) {
+                if ($role->name === $authGroup['role']) {
+                    break;
                 }
+            }
+            if (((int)$id !== (int)$characterData['corporation_id'] && (int)$id !== (int)$characterData['alliance_id'] && (int)$id !== (int)$characterId && (int)$id !== 1234) && in_array($role->id, $member->roles)) {
+                $removeTheseRoles[] = (int)$role->id;
+                if ((int)$config['discord']['logChannel'] !== 0) {
+                    $removeTheseRolesName[] = $role->name;
+                }
+                $log->notice("$eveName has been removed from the role $role->name");
+                continue;
             }
         }
+    } catch (Exception $e) {
+        // Check if we're being rate limited
+        if (strpos($error, 'rate limited') !== false) {
+            break;
+        }
+        $log->error('ERROR: ' . $error);
     }
-    if (in_array('character', $type, true)) {
-        foreach ($config["groups"] as $authGroup) {
-            $id = $authGroup["id"];
-            if ($id !== $characterId) {
-                foreach ($roles as $role) {
-                    if ($role->name === $authGroup["role"]) {
-                        $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'role.id' => (int)$role->id]);
-                        if ((int)$config['discord']['logChannel'] !== 0) {
-                            $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the role $role->name"]);
-                            $log->notice("$eveName has been removed from the role $role->name");
-                        }
-                        if (($key = array_search('character', $type)) !== false) {
-                            unset($type[$key]);
-                        }
-                        break 3;
-                    }
+    if (count($removeTheseRoles) > 0) {
+        foreach ($removeTheseRoles as $removeRole) {
+            try {
+                $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'role.id' => (int)$removeRole]);
+            } catch (Exception $e) {
+                $error = $e->getMessage();
+                // Check if error is user left server and if so remove them
+                if (strpos($error, '10007') !== false) {
+                    deleteUser($id);
+                    continue 2;
                 }
+                // Check if we're being rate limited
+                if (strpos($error, 'rate limited') !== false) {
+                    break 2;
+                }
+                $log->error('ERROR: ' . $error);
             }
+        }
+        if ((int)$config['discord']['logChannel'] !== 0) {
+            $removedRoles = implode(', ', $removeTheseRolesName);
+            $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the following roles $removedRoles"]);
         }
     }
     if (count($type) === 0) {
+        $log->notice("2 $type");
         deleteUser($id);
     }
 }

@@ -13,6 +13,7 @@ $config["discord"] = array(
     "guildId" => 12345, //Get the guild ID for your discord server
     "logChannel" => 0, //The channel ID for where you want the bot to report auth stuff (leave as 0 to disable)
     "enforceInGameName" => false, //Setting this to true will change players names to match their ingame name when they auth (this works retroactively)
+    "addTicker" => false, //Setting this to true will add the corp ticker to the beginning of the users discord name
     "inviteLink" => "", //Make sure it's set to never expire and set to a public channel.
     "botToken" => "", //The bot must be a member of your server
     "clientId" => "", //The bot must be a member of your server

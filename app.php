@@ -70,7 +70,9 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         $code = $_COOKIE['eveCode'];
 
         //Make sure bots nick is set
-        if (isset($config['discord']['botNick'])) {$restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);}
+        if (isset($config['discord']['botNick'])) {
+            $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+        }
 
         $tokenURL = "https://login.eveonline.com/oauth/token";
         $base64 = base64_encode($config["sso"]["clientID"] . ":" . $config["sso"]["secretKey"]);
@@ -90,6 +92,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         $characterID = $data->CharacterID;
         $characterData = characterDetails($characterID);
         $corporationID = $characterData['corporation_id'];
+        $corporationData = corporationDetails($corporationID);
         $eveName = $characterData['name'];
         $currentGuild = $restcord->guild->getGuild(['guild.id' => (int)$config['discord']['guildId']]);
         if (!isset($characterData['alliance_id'])) {
@@ -102,7 +105,23 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         // Whatever ID matches whatever group, they get added to. Discord role ordering decides what they can and can't see
         $access = array();
         $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
-        if ($config['discord']['enforceInGameName'] && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {$restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);}
+        if (($config['discord']['enforceInGameName'] || $config['discord']['addTicker']) && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {
+            if ($config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
+                $newNick = "[" . $corporationData['ticker'] . "] " . $eveName;
+                $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick]);
+            } else if (!$config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
+                $memberDetails = $restcord->guild->getGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id']]);
+                if ($memberDetails->nick) {
+                    $cleanNick = str_replace("[" . $corporationData['ticker'] . "]", "", $memberDetails->nick);
+                    $newNick = "[" . $corporationData['ticker'] . "] " . $cleanNick;
+                } else {
+                    $newNick = "[" . $corporationData['ticker'] . "] " . $memberDetails->user->username;
+                }
+                $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick]);
+            } else {
+                $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);
+            }
+        }
         foreach ($config["groups"] as $authGroup) {
             $id = $authGroup["id"];
             $role = null;

@@ -113,9 +113,9 @@ $app->get("/auth/", function () use ($app, $config, $log) {
                 $memberDetails = $restcord->guild->getGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id']]);
                 if ($memberDetails->nick) {
                     $cleanNick = str_replace("[" . $corporationData['ticker'] . "]", "", $memberDetails->nick);
-                    $newNick = "[" . $corporationData['ticker'] . "] " . $cleanNick;
+                    $newNick = "[" . $corporationData['ticker'] . "]" . $cleanNick;
                 } else {
-                    $newNick = "[" . $corporationData['ticker'] . "] " . $memberDetails->user->username;
+                    $newNick = "[" . $corporationData['ticker'] . "]" . $memberDetails->user->username;
                 }
                 $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick]);
             } else {

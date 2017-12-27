@@ -62,9 +62,9 @@ foreach ($users as $user) {
             $memberDetails = $restcord->guild->getGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
             if ($memberDetails->nick) {
                 $cleanNick = str_replace("[" . $corporationData['ticker'] . "]", "", $memberDetails->nick);
-                $newNick = "[" . $corporationData['ticker'] . "] " . $cleanNick;
+                $newNick = "[" . $corporationData['ticker'] . "]" . $cleanNick;
             } else {
-                $newNick = "[" . $corporationData['ticker'] . "] " . $memberDetails->user->username;
+                $newNick = "[" . $corporationData['ticker'] . "]" . $memberDetails->user->username;
             }
             $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $newNick]);
         } else {

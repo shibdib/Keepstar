@@ -40,6 +40,7 @@ foreach ($users as $user) {
     $type = json_decode($user['groups'], TRUE);
     $id = $user['id'];
     $characterData = characterDetails($characterId);
+    $corporationData = corporationDetails($characterData['corporation_id']);
     $eveName = $characterData['name'];
     $exists = False;
     foreach ($members as $member) {
@@ -52,6 +53,23 @@ foreach ($users as $user) {
         $log->notice("$eveName has been removed from the database as they are no longer a member of the server.");
         deleteUser($id);
         continue;
+    }
+    if (($config['discord']['enforceInGameName'] || $config['discord']['addTicker']) && (int)$currentGuild->owner_id !== (int)$discordId) {
+        if ($config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
+            $newNick = "[" . $corporationData['ticker'] . "] " . $eveName;
+            $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $newNick]);
+        } else if (!$config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
+            $memberDetails = $restcord->guild->getGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
+            if ($memberDetails->nick) {
+                $cleanNick = str_replace("[" . $corporationData['ticker'] . "]", "", $memberDetails->nick);
+                $newNick = "[" . $corporationData['ticker'] . "] " . $cleanNick;
+            } else {
+                $newNick = "[" . $corporationData['ticker'] . "] " . $memberDetails->user->username;
+            }
+            $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $newNick]);
+        } else {
+            $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $eveName]);
+        }
     }
     try {
         $removeTheseRoles = [];

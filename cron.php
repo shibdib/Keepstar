@@ -31,6 +31,10 @@ if (isset($config['discord']['botNick'])) {
 createAuthDb();
 
 $users = getUsers();
+$status = serverStatus();
+if (!$status || !$status['players'] || (int)$status['players'] < 100) {
+    return null;
+}
 $members = $restcord->guild->listGuildMembers(['guild.id' => $config['discord']['guildId'], 'limit' => 1000]);
 $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
 $currentGuild = $restcord->guild->getGuild(['guild.id' => (int)$config['discord']['guildId']]);

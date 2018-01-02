@@ -32,8 +32,8 @@ createAuthDb();
 
 $users = getUsers();
 $status = serverStatus();
-if (!$status || !$status['players'] || (int)$status['players'] < 100) {
-    return null;
+if (!$status || $status['players'] === null || (int)$status['players'] < 100) {
+    die();
 }
 $members = $restcord->guild->listGuildMembers(['guild.id' => $config['discord']['guildId'], 'limit' => 1000]);
 $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
@@ -52,6 +52,10 @@ foreach ($users as $user) {
             $exists = True;
             break;
         }
+    }
+    //Additional ESI Check
+    if (!(int)$characterData['corporation_id'] || (int)$characterData['corporation_id'] === null){
+        continue;
     }
     if (!$exists) {
         $log->notice("$eveName has been removed from the database as they are no longer a member of the server.");

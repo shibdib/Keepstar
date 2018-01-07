@@ -37,10 +37,8 @@ $app->get("/", function () use ($app, $config) {
 });
 
 $app->get("/auth/", function () use ($app, $config, $log) {
-    if (isset($_GET['code']) && !isset($_COOKIE["eveCode"])) {
-        $cookie_name = "eveCode";
-        $cookie_value = $_GET['code'];
-        setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/");
+    if (isset($_GET['code']) && !isset($_SESSION["eveCode"])) {
+        $_SESSION["eveCode"] = $_GET['code'];
         $url = $config['sso']['callbackURL'];
         echo "<head><meta http-equiv='refresh' content='0; url=$url' /></head>";
         return;
@@ -67,7 +65,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
             return;
         }
 
-        $code = $_COOKIE['eveCode'];
+        $code = $_SESSION["eveCode"];
 
         //Make sure bots nick is set
         if (isset($config['discord']['botNick'])) {

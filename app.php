@@ -45,7 +45,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
     }
     if (!isset($_GET['code'])) {
         // If we don't have a code yet, we need to make the link
-        $scopes = 'guilds.join%20identify%20guilds';
+        $scopes = 'identify%20guilds';
         $discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
         $app->render("discord.twig", array("botToken" => $config['discord']['botToken'], "discordLink" => $discordLink));
 

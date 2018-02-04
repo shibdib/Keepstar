@@ -32,12 +32,6 @@ $config["groups"] = array(
     ),
 );
 
-$config["firetail"] = array( // Only change this section if you're linking to a local install of firetail
-    "active" => false, //Set to true if you have a local install of firetail and want to link it with keepstar
-    "path" => '/home/user/firetail/firetail.sqlite', //Database path for firetail
-    "scopes" => '' // Click copy scopes to clipboard and paste them here
-);
-
 // Site IGNORE EVERYTHING BELOW THIS LINE
 $config["site"] = array(
     "debug" => true,
@@ -59,5 +53,12 @@ $config["slim"] = array(
     "debug" => $config["site"]["debug"],
     "cookies.secret_key" => $config["cookies"]["secret"],
     "templates.path" => BASEDIR . "/view/",
+);
+
+//DO NOT USE THIS YET
+$config["firetail"] = array( // Only change this section if you're linking to a local install of firetail
+    "active" => false, //Set to true if you have a local install of firetail and want to link it with keepstar
+    "path" => '/home/user/firetail/firetail.sqlite', //Database path for firetail
+    "scopes" => '' // Click copy scopes to clipboard and paste them here
 );
 

@@ -33,7 +33,13 @@ if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.block
 
 // Routes
 $app->get("/", function () use ($app, $config) {
-    $app->render("index.twig", array("crestURL" => "https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=" . $config['sso']['callbackURL'] . "&client_id=" . $config['sso']['clientID']));
+    if ($config['firetail']['active'] === true) {
+        $scopes = str_replace(' ', '%20', $config['firetail']['scopes']);
+        $url = 'https://login.eveonline.com/oauth/authorize?response_type=code&scope=' . $scopes . '&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];
+    } else {
+        $url = 'https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];
+    }
+    $app->render("index.twig", array("crestURL" => $url));
 });
 
 $app->get("/auth/", function () use ($app, $config, $log) {
@@ -182,6 +188,13 @@ $app->get("/auth/", function () use ($app, $config, $log) {
 
         // Insert it all into the db
         insertUser($characterID, (int)$_SESSION['user_id'], $accessList);
+
+        // If firetail link is active, insert into firetail db
+        if ($config['firetail']['active'] === true) {
+            $refreshToken = $data->refresh_token;
+            firetailEntry($characterID, (int)$_SESSION['user_id'], $refreshToken, $config['firetail']['path']);
+        }
+
 
         if (count($access) > 0) {
             //if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}

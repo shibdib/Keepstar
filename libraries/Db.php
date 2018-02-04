@@ -22,9 +22,17 @@ function deleteUser($id)
     return null;
 }
 
-function openDB()
+function firetailEntry($characterID, $discordID, $token, $db)
 {
-    $db = __DIR__ . '/database/auth.sqlite';
+    dbExecute('REPLACE INTO tokens (`character_id`, `discord_id`, `token`) VALUES (:character_id,:discord_id,:token)', array(':character_id' => $characterID, ':discord_id' => $discordID, ':token' => $token), $db);
+    return null;
+}
+
+function openDB($db = true)
+{
+    if ($db === true) {
+        $db = __DIR__ . '/database/auth.sqlite';
+    }
 
     $dsn = "sqlite:$db";
     try {
@@ -42,9 +50,9 @@ function openDB()
     return $pdo;
 }
 
-function dbExecute($query, array $params = array())
+function dbExecute($query, array $params = array(), $db = true)
 {
-    $pdo = openDB();
+    $pdo = openDB($db);
     if ($pdo === NULL) {
         return;
     }

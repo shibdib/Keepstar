@@ -24,7 +24,7 @@ function deleteUser($id)
 
 function firetailEntry($characterID, $discordID, $token, $db)
 {
-    dbExecute('REPLACE INTO tokens (`character_id`, `discord_id`, `token`) VALUES (:character_id,:discord_id,:token)', array(':character_id' => $characterID, ':discord_id' => $discordID, ':token' => $token), $db);
+    dbExecute('REPLACE INTO access_tokens (`character_id`, `discord_id`, `token`) VALUES (:character_id,:discord_id,:token)', array(':character_id' => $characterID, ':discord_id' => $discordID, ':token' => $token), $db);
     return null;
 }
 

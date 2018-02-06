@@ -127,6 +127,12 @@ foreach ($users as $user) {
             $removedRoles = implode(', ', $removeTheseRolesName);
             $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the following roles $removedRoles"]);
         }
+        if (!isset($config['discord']['removeUser'])) {
+            $config['discord']['removeUser'] = False;
+        }
+        if ($config['discord']['removeUser'] === True) {
+            $restcord->guild->removeGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
+        }
     }
     if (count($type) === 0) {
         $log->notice("2 $type");

@@ -30,6 +30,10 @@ if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.block
     convertMysql($config);
 }
 
+//add a check for old configs
+if (!isset($config['firetail'])) {
+    $config['firetail']['active'] = False;
+}
 
 // Routes
 $app->get("/", function () use ($app, $config) {

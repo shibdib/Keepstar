@@ -106,32 +106,41 @@ foreach ($users as $user) {
         $log->error('ERROR: ' . $error);
     }
     if (count($removeTheseRoles) > 0) {
-        foreach ($removeTheseRoles as $removeRole) {
-            try {
-                $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'role.id' => (int)$removeRole]);
-            } catch (Exception $e) {
-                $error = $e->getMessage();
-                // Check if error is user left server and if so remove them
-                if (strpos($error, '10007') !== false) {
-                    deleteUser($id);
-                    continue 2;
+        if (checkIfRemoved($discordId)) {
+            deleteRemoved($discordId);
+            foreach ($removeTheseRoles as $removeRole) {
+                try {
+                    $restcord->guild->removeGuildMemberRole(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'role.id' => (int)$removeRole]);
+                } catch (Exception $e) {
+                    $error = $e->getMessage();
+                    // Check if error is user left server and if so remove them
+                    if (strpos($error, '10007') !== false) {
+                        deleteUser($id);
+                        continue 2;
+                    }
+                    // Check if we're being rate limited
+                    if (strpos($error, 'rate limited') !== false) {
+                        break 2;
+                    }
+                    $log->error('ERROR: ' . $error);
                 }
-                // Check if we're being rate limited
-                if (strpos($error, 'rate limited') !== false) {
-                    break 2;
-                }
-                $log->error('ERROR: ' . $error);
             }
+            if ((int)$config['discord']['logChannel'] !== 0) {
+                $removedRoles = implode(', ', $removeTheseRolesName);
+                $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the following roles $removedRoles"]);
+            }
+            if (!isset($config['discord']['removeUser'])) {
+                $config['discord']['removeUser'] = False;
+            }
+            if ($config['discord']['removeUser'] === True) {
+                $restcord->guild->removeGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
+            }
+        } else {
+            insertRemoved($characterId, $discordId, $user['groups']);
         }
-        if ((int)$config['discord']['logChannel'] !== 0) {
-            $removedRoles = implode(', ', $removeTheseRolesName);
-            $restcord->channel->createMessage(['channel.id' => (int)$config['discord']['logChannel'], 'content' => "$eveName has been removed from the following roles $removedRoles"]);
-        }
-        if (!isset($config['discord']['removeUser'])) {
-            $config['discord']['removeUser'] = False;
-        }
-        if ($config['discord']['removeUser'] === True) {
-            $restcord->guild->removeGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
+    } else {
+        if (checkIfRemoved($discordId)) {
+            deleteRemoved($discordId);
         }
     }
     if (count($type) === 0) {

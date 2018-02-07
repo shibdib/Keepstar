@@ -6,9 +6,20 @@ function insertUser($characterID, $discordID, $accessList)
     return null;
 }
 
+function insertRemoved($characterID, $discordID, $accessList)
+{
+    dbExecute('REPLACE INTO remove (`characterID`, `discordID`, `groups`) VALUES (:characterID,:discordID,:groups)', array(':characterID' => $characterID, ':discordID' => $discordID, ':groups' => $accessList));
+    return null;
+}
+
 function getUsers()
 {
     return dbQuery('SELECT * FROM authed');
+}
+
+function checkIfRemoved($discordId)
+{
+    return dbQuery('SELECT * FROM remove WHERE `discordID` = :discordID', array(':discordID' => $discordId));
 }
 
 function getUser($discordId)
@@ -19,6 +30,12 @@ function getUser($discordId)
 function deleteUser($id)
 {
     dbQueryRow('DELETE from authed WHERE `id` = :id', array(':id' => $id));
+    return null;
+}
+
+function deleteRemoved($discordID)
+{
+    dbQueryRow('DELETE from remove WHERE `discordID` = :discordID', array(':discordID' => $discordID));
     return null;
 }
 

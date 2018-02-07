@@ -14,6 +14,15 @@ function createAuthDb()
 	            `discordID`	INTEGER NOT NULL UNIQUE,
 	            `groups`	TEXT NOT NULL
             );
+            COMMIT;',
+        'remove' => '
+            BEGIN;
+            CREATE TABLE IF NOT EXISTS `remove` (
+	            `id`	INTEGER PRIMARY KEY AUTOINCREMENT,
+	            `characterID`	INTEGER NOT NULL UNIQUE,
+	            `discordID`	INTEGER NOT NULL UNIQUE,
+	            `groups`	TEXT NOT NULL
+            );
             COMMIT;');
 
     // Does the file exist?

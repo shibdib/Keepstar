@@ -86,16 +86,19 @@ foreach ($users as $user) {
             $id = $authGroup["id"];
             foreach ($roles as $role) {
                 if ($role->name === $authGroup['role']) {
-                    break;
+                    if (((int)$id !== (int)$characterData['corporation_id'] && (int)$id !== (int)$characterData['alliance_id'] && (int)$id !== (int)$characterId && (int)$id !== 1234) && in_array($role->id, $member->roles)) {
+                        $removeTheseRoles[] = (int)$role->id;
+                        if ((int)$config['discord']['logChannel'] !== 0) {
+                            $removeTheseRolesName[] = $role->name;
+                        }
+                        $log->notice("$eveName has been removed from the role $role->name");
+                        continue;
+                    } else {
+                        if (in_array($role->id, $removeTheseRoles)) {
+                            unset($removeTheseRoles[array_search($role->id, $removeTheseRoles)]);
+                        }
+                    }
                 }
-            }
-            if (((int)$id !== (int)$characterData['corporation_id'] && (int)$id !== (int)$characterData['alliance_id'] && (int)$id !== (int)$characterId && (int)$id !== 1234) && in_array($role->id, $member->roles)) {
-                $removeTheseRoles[] = (int)$role->id;
-                if ((int)$config['discord']['logChannel'] !== 0) {
-                    $removeTheseRolesName[] = $role->name;
-                }
-                $log->notice("$eveName has been removed from the role $role->name");
-                continue;
             }
         }
     } catch (Exception $e) {

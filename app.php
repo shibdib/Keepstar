@@ -37,6 +37,12 @@ if (!isset($config['firetail'])) {
 
 // Routes
 $app->get("/", function () use ($app, $config) {
+    //Clear out session just incase
+    $_SESSION = array();
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time()-42000, '/');
+    }
+    //Check if keepstar is linked to firetail
     if ($config['firetail']['active'] === true) {
         $scopes = str_replace(' ', '%20', $config['firetail']['scopes']);
         $url = 'https://login.eveonline.com/oauth/authorize?response_type=code&scope=' . $scopes . '&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];

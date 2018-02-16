@@ -1,11 +1,11 @@
 <?php
 
-define("BASEDIR", __DIR__);
-ini_set("display_errors", 1);
+define('BASEDIR', __DIR__);
+ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once(BASEDIR . "/config/config.php");
-require_once(BASEDIR . "/vendor/autoload.php");
+require_once BASEDIR . '/config/config.php';
+require_once BASEDIR . '/vendor/autoload.php';
 
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
@@ -16,11 +16,11 @@ $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/KeepstarCron.log', Log
 
 $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
 
-foreach (glob(BASEDIR . "/libraries/*.php") as $lib)
-    require_once($lib);
+foreach (glob(BASEDIR . '/libraries/*.php') as $lib)
+    require_once $lib;
 
 //Start Auth
-$log->notice("AUTHCHECK INITIATED");
+$log->notice('AUTHCHECK INITIATED');
 
 //Make sure bots nick is set
 if (isset($config['discord']['botNick'])) {
@@ -64,15 +64,15 @@ foreach ($users as $user) {
     }
     if (($config['discord']['enforceInGameName'] || $config['discord']['addTicker']) && (int)$currentGuild->owner_id !== (int)$discordId) {
         if ($config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
-            $newNick = "[" . $corporationData['ticker'] . "] " . $eveName;
+            $newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
             $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $newNick]);
         } else if (!$config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
             $memberDetails = $restcord->guild->getGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
             if ($memberDetails->nick) {
-                $cleanNick = str_replace("[" . $corporationData['ticker'] . "]", "", $memberDetails->nick);
-                $newNick = "[" . $corporationData['ticker'] . "]" . $cleanNick;
+                $cleanNick = str_replace('[' . $corporationData['ticker'] . ']', '', $memberDetails->nick);
+                $newNick = '[' . $corporationData['ticker'] . ']' . $cleanNick;
             } else {
-                $newNick = "[" . $corporationData['ticker'] . "]" . $memberDetails->user->username;
+                $newNick = '[' . $corporationData['ticker'] . ']' . $memberDetails->user->username;
             }
             $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId, 'nick' => $newNick]);
         } else {
@@ -82,8 +82,8 @@ foreach ($users as $user) {
     try {
         $removeTheseRoles = [];
         $removeTheseRolesName = [];
-        foreach ($config["groups"] as $authGroup) {
-            $id = $authGroup["id"];
+        foreach ($config['groups'] as $authGroup) {
+            $id = $authGroup['id'];
             foreach ($roles as $role) {
                 if ($role->name === $authGroup['role']) {
                     if (((int)$id !== (int)$characterData['corporation_id'] && (int)$id !== (int)$characterData['alliance_id'] && (int)$id !== (int)$characterId && (int)$id !== 1234) && in_array($role->id, $member->roles)) {

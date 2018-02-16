@@ -3,7 +3,7 @@
 
 function createAuthDb()
 {
-    $tables = array('authed');
+    $tables = array('authed', 'keepstar', 'remove');
 
     $createCode = array(
         'authed' => '
@@ -13,6 +13,14 @@ function createAuthDb()
 	            `characterID`	INTEGER NOT NULL UNIQUE,
 	            `discordID`	INTEGER NOT NULL UNIQUE,
 	            `groups`	TEXT NOT NULL
+            );
+            COMMIT;',
+        'keepstar' => '
+            BEGIN;
+            CREATE TABLE IF NOT EXISTS `keepstar` (
+	            `id`	INTEGER PRIMARY KEY AUTOINCREMENT,
+	            `variable`	TEXT NOT NULL UNIQUE,
+	            `value`	TEXT NOT NULL
             );
             COMMIT;',
         'remove' => '

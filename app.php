@@ -36,6 +36,14 @@ if (!isset($config['firetail'])) {
 }
 
 // Routes
+$app->get("/admin/", function () use ($app, $config) {
+    if (!getKeepstar('botStarted')) {
+        $app->render("admin.twig", array("botToken" => $config['discord']['botToken']));
+        insertKeepstar('botStarted','True');
+    } else {
+        echo "You have no reason to go here.";
+    }
+});
 $app->get("/", function () use ($app, $config) {
     //Clear out session just incase
     $_SESSION = array();

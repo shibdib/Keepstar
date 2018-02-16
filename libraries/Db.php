@@ -45,6 +45,17 @@ function firetailEntry($characterID, $discordID, $token, $db)
     return null;
 }
 
+function insertKeepstar($variable, $value)
+{
+    dbExecute('REPLACE INTO keepstar (`variable`, `value`) VALUES (:variable,:value)', array(':variable' => $variable, ':value' => $value));
+    return null;
+}
+
+function getKeepstar($variable)
+{
+    return dbQuery('SELECT * FROM keepstar WHERE `variable` = :variable', array(':variable' => $variable));
+}
+
 function openDB($db = true)
 {
     if ($db === true) {

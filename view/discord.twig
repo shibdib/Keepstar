@@ -5,37 +5,8 @@
 <head>
     <script type="application/javascript">
         function wsEvent() {
-            var TOKEN = "{{ botToken }}";
-            var ws = new WebSocket("wss://gateway.discord.gg/?encoding=json&v=6");
-
-            ws.onopen = function () {
-                return console.log("OPEN!")
-            };
-            ws.onerror = console.error.bind(console);
-            ws.onclose = console.error.bind(console);
-            ws.onmessage = function (a) {
-                try {
-                    var b = JSON.parse(a.data);
-                    if (0 === b.op) {
-                        return;
-                    }
-
-                    if (b.op === 10) {
-                        ws.send(JSON.stringify({
-                            op: 2,
-                            d: {
-                                token: TOKEN,
-                                properties: {$browser: "Restcord Gateway Connect"}
-                            }
-                        }));
-                        ws.close();
-                        var url = "{{ discordLink }}";
-                        window.location = url.replace(/amp;/gi, "");
-                    }
-                } catch (a) {
-                    console.error(a)
-                }
-            };
+            var url = "{{ discordLink }}";
+            window.location = url.replace(/amp;/gi, "");
         }
     </script>
     <title>Discord Authenticator</title>

@@ -93,10 +93,9 @@ foreach ($users as $user) {
                         }
                         $log->notice("$eveName has been removed from the role $role->name");
                         continue;
-                    } else {
-                        if (in_array($role->id, $removeTheseRoles)) {
-                            unset($removeTheseRoles[array_search($role->id, $removeTheseRoles)]);
-                        }
+                    }
+                    if (in_array($role->id, $removeTheseRoles, true)) {
+                        unset($removeTheseRoles[array_search($role->id, $removeTheseRoles, true)]);
                     }
                 }
             }
@@ -135,10 +134,6 @@ foreach ($users as $user) {
         }
         if ($config['discord']['removeUser'] === True) {
             $restcord->guild->removeGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$discordId]);
-        }
-    } else {
-        if (checkIfRemoved($discordId)) {
-            deleteRemoved($discordId);
         }
     }
     if (count($type) === 0) {

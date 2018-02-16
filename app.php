@@ -1,11 +1,11 @@
 <?php
 
-define("BASEDIR", __DIR__);
-ini_set("display_errors", 1);
+define('BASEDIR', __DIR__);
+ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once(BASEDIR . "/config/config.php");
-require_once(BASEDIR . "/vendor/autoload.php");
+require_once BASEDIR . '/config/config.php';
+require_once BASEDIR . '/vendor/autoload.php';
 
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
@@ -14,19 +14,19 @@ use RestCord\DiscordClient;
 $log = new Logger('DScan');
 $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/Keepstar.log', Logger::NOTICE));
 
-$app = new \Slim\Slim($config["slim"]);
+$app = new \Slim\Slim($config['slim']);
 $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware());
 $app->view(new \Slim\Views\Twig());
 
 // Load libraries
-foreach (glob(BASEDIR . "/libraries/*.php") as $lib)
-    require_once($lib);
+foreach (glob(BASEDIR . '/libraries/*.php') as $lib)
+    require_once $lib;
 
 //Ensure DB Is Created
 createAuthDb();
 //Convert mysql if needed
 if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')) {
-    require_once(BASEDIR . "/tools/mysqlConverter.php");
+    require_once BASEDIR . '/tools/mysqlConverter.php';
     convertMysql($config);
 }
 
@@ -36,15 +36,15 @@ if (!isset($config['firetail'])) {
 }
 
 // Routes
-$app->get("/admin/", function () use ($app, $config) {
+$app->get('/admin/', function () use ($app, $config) {
     if (!getKeepstar('botStarted')) {
-        $app->render("admin.twig", array("botToken" => $config['discord']['botToken']));
+        $app->render('admin.twig', array('botToken' => $config['discord']['botToken']));
         insertKeepstar('botStarted','True');
     } else {
-        echo "You have no reason to go here.";
+        echo 'You have no reason to go here.';
     }
 });
-$app->get("/", function () use ($app, $config) {
+$app->get('/', function () use ($app, $config) {
     //Clear out session just incase
     $_SESSION = array();
     if (isset($_COOKIE[session_name()])) {
@@ -57,12 +57,12 @@ $app->get("/", function () use ($app, $config) {
     } else {
         $url = 'https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];
     }
-    $app->render("index.twig", array("crestURL" => $url));
+    $app->render('index.twig', array('crestURL' => $url));
 });
 
-$app->get("/auth/", function () use ($app, $config, $log) {
-    if (isset($_GET['code']) && !isset($_SESSION["eveCode"])) {
-        $_SESSION["eveCode"] = $_GET['code'];
+$app->get('/auth/', function () use ($app, $config, $log) {
+    if (isset($_GET['code']) && !isset($_SESSION['eveCode'])) {
+        $_SESSION['eveCode'] = $_GET['code'];
         $url = $config['sso']['callbackURL'];
         echo "<head><meta http-equiv='refresh' content='0; url=$url' /></head>";
         return;
@@ -71,7 +71,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         // If we don't have a code yet, we need to make the link
         $scopes = 'identify%20guilds';
         $discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
-        $app->render("discord.twig", array("botToken" => $config['discord']['botToken'], "discordLink" => $discordLink));
+        $app->render('discord.twig', array('botToken' => $config['discord']['botToken'], 'discordLink' => $discordLink));
 
     } else {
         // If we do have a code, use it to get a token
@@ -85,30 +85,30 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         }
         $restcord = new DiscordClient(['token' => $config['discord']['botToken']]);
         if (!in_array($config['discord']['guildId'], $guildIds, false)) {
-            $app->render("notinserver.twig", array("discordLink" => $config['discord']['inviteLink']));
+            $app->render('notinserver.twig', array('discordLink' => $config['discord']['inviteLink']));
             return;
         }
 
-        $code = $_SESSION["eveCode"];
+        $code = $_SESSION['eveCode'];
 
         //Make sure bots nick is set
         if (isset($config['discord']['botNick'])) {
             $restcord->guild->modifyCurrentUserNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
         }
 
-        $tokenURL = "https://login.eveonline.com/oauth/token";
-        $base64 = base64_encode($config["sso"]["clientID"] . ":" . $config["sso"]["secretKey"]);
+        $tokenURL = 'https://login.eveonline.com/oauth/token';
+        $base64 = base64_encode($config['sso']['clientID'] . ':' . $config['sso']['secretKey']);
 
         $data = json_decode(sendData($tokenURL, array(
-            "grant_type" => "authorization_code",
-            "code" => $code
+            'grant_type' => 'authorization_code',
+            'code' => $code
         ), array("Authorization: Basic {$base64}")));
 
         $accessToken = $data->access_token;
 
 
         // Verify Token
-        $verifyURL = "https://login.eveonline.com/oauth/verify";
+        $verifyURL = 'https://login.eveonline.com/oauth/verify';
         $data = json_decode(sendData($verifyURL, array(), array("Authorization: Bearer {$accessToken}")));
 
         $characterID = $data->CharacterID;
@@ -129,27 +129,27 @@ $app->get("/auth/", function () use ($app, $config, $log) {
         $roles = $restcord->guild->getGuildRoles(['guild.id' => $config['discord']['guildId']]);
         if (($config['discord']['enforceInGameName'] || $config['discord']['addTicker']) && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {
             if ($config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
-                $newNick = "[" . $corporationData['ticker'] . "] " . $eveName;
+                $newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
                 $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick]);
             } else if (!$config['discord']['enforceInGameName'] && $config['discord']['addTicker']) {
                 $memberDetails = $restcord->guild->getGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id']]);
                 if ($memberDetails->nick) {
-                    $cleanNick = str_replace("[" . $corporationData['ticker'] . "]", "", $memberDetails->nick);
-                    $newNick = "[" . $corporationData['ticker'] . "]" . $cleanNick;
+                    $cleanNick = str_replace('[' . $corporationData['ticker'] . ']', '', $memberDetails->nick);
+                    $newNick = '[' . $corporationData['ticker'] . ']' . $cleanNick;
                 } else {
-                    $newNick = "[" . $corporationData['ticker'] . "]" . $memberDetails->user->username;
+                    $newNick = '[' . $corporationData['ticker'] . ']' . $memberDetails->user->username;
                 }
                 $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick]);
             } else {
                 $restcord->guild->modifyGuildMember(['guild.id' => (int)$config['discord']['guildId'], 'user.id' => (int)$_SESSION['user_id'], 'nick' => $eveName]);
             }
         }
-        foreach ($config["groups"] as $authGroup) {
-            $id = $authGroup["id"];
+        foreach ($config['groups'] as $authGroup) {
+            $id = $authGroup['id'];
             $role = null;
             if ($id == 1234) {
                 foreach ($roles as $role) {
-                    if ($role->name == $authGroup["role"]) {
+                    if ($role->name == $authGroup['role']) {
                         break;
                     }
                 }
@@ -162,7 +162,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
             }
             if ($id == $characterID) {
                 foreach ($roles as $role) {
-                    if ($role->name == $authGroup["role"]) {
+                    if ($role->name == $authGroup['role']) {
                         break;
                     }
                 }
@@ -175,7 +175,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
             }
             if ($id == $allianceID) {
                 foreach ($roles as $role) {
-                    if ($role->name == $authGroup["role"]) {
+                    if ($role->name == $authGroup['role']) {
                         break;
                     }
                 }
@@ -188,7 +188,7 @@ $app->get("/auth/", function () use ($app, $config, $log) {
             }
             if ($id == $corporationID) {
                 foreach ($roles as $role) {
-                    if ($role->name == $authGroup["role"]) {
+                    if ($role->name == $authGroup['role']) {
                         break;
                     }
                 }
@@ -216,10 +216,10 @@ $app->get("/auth/", function () use ($app, $config, $log) {
 
         if (count($access) > 0) {
             //if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
-            $app->render("authed.twig");
+            $app->render('authed.twig');
         } else {
             //if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
-            $app->render("norole.twig");
+            $app->render('norole.twig');
         }
     }
 });

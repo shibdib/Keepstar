@@ -24,8 +24,8 @@ foreach(glob(BASEDIR . '/libraries/*.php') as $lib) {
 $log->notice('AUTHCHECK INITIATED');
 
 //Make sure bots nick is set
-if(isset($config['discord']['botNick'])) {
-	$restcord->guild->modifyCurrentUserNick(['guild.id' => (int) $config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+if (isset($config['discord']['botNick'])) {
+    $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
 }
 
 //Ensure DB Is Created

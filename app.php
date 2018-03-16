@@ -93,7 +93,7 @@ $app->get('/auth/', function () use ($app, $config, $log) {
 
         //Make sure bots nick is set
         if (isset($config['discord']['botNick'])) {
-            $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+            $restcord->guild->modifyCurrentUserNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
         }
 
         $tokenURL = 'https://login.eveonline.com/oauth/token';

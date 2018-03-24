@@ -93,7 +93,11 @@ $app->get('/auth/', function () use ($app, $config, $log) {
 
         //Make sure bots nick is set
         if (isset($config['discord']['botNick'])) {
-            $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+            try {
+                $restcord->guild->modifyCurrentUsersNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+            } catch (Exception $e){
+                $restcord->guild->modifyCurrentUserNick(['guild.id' => (int)$config['discord']['guildId'], 'nick' => $config['discord']['botNick']]);
+            }
         }
 
         $tokenURL = 'https://login.eveonline.com/oauth/token';
@@ -145,9 +149,14 @@ $app->get('/auth/', function () use ($app, $config, $log) {
             }
         }
         foreach ($config['groups'] as $authGroup) {
-            $id = $authGroup['id'];
+            if (is_array($authGroup['id'])) {
+                $id = $authGroup['id'];
+            } else {
+                $id = [];
+                $id[] = $authGroup['id'];
+            }
             $role = null;
-            if ($id == 1234) {
+            if (in_array(1234, $id)) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup['role']) {
                         break;
@@ -160,7 +169,7 @@ $app->get('/auth/', function () use ($app, $config, $log) {
                 $access[] = 'character';
                 continue;
             }
-            if ($id == $characterID) {
+            if (in_array($characterID, $id)) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup['role']) {
                         break;
@@ -173,7 +182,7 @@ $app->get('/auth/', function () use ($app, $config, $log) {
                 $access[] = 'character';
                 continue;
             }
-            if ($id == $allianceID) {
+            if (in_array($allianceID, $id)) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup['role']) {
                         break;
@@ -186,7 +195,7 @@ $app->get('/auth/', function () use ($app, $config, $log) {
                 $access[] = 'alliance';
                 continue;
             }
-            if ($id == $corporationID) {
+            if (in_array($corporationID, $id)) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup['role']) {
                         break;

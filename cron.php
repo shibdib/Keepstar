@@ -146,7 +146,7 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 				if(!empty($corporationData['ticker'])) {
 					$newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
 
-					if($config['discord']['addAllianceTicker'] && !is_null($allianceTicker)) {
+					if(isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
 						$newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
 					}
 
@@ -165,7 +165,7 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 				if($memberDetails->nick) {
 					$searchstring = '[' . $corporationData['ticker'] . ']';
 
-					if($config['discord']['addAllianceTicker'] && !is_null($allianceTicker)) {
+					if(isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
 						$searchstring = $allianceTicker . ' [' . $corporationData['ticker'] . ']';
 					}
 

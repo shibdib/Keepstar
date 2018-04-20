@@ -382,6 +382,19 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 					'user.id' => (int) $discordID
 				]);
 			}
+
+            if(isset($config['discord']['removedRole']) && $config['discord']['removedRole'] !== false) {
+                foreach ($roles as $role) {
+                    if ($role->name == $config['discord']['removedRole']) {
+                        break;
+                    }
+                }
+                $restcord->guild->addGuildMemberRole([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'role.id' => (int)$role->id
+                ]);
+            }
 		}
 
 		if(count($type) === 0) {

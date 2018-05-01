@@ -27,11 +27,11 @@ $config['discord'] = [
 
 $config['groups'] = [
 	'group1' => [
-		'id' => ['1234'], // Corp/Alliance/Player ID
+		'id' => ['1234'], // Corp/Alliance/Player ID/(PUTTING 1234 IS A CATCH ALL, IT WILL ASSIGN THAT ROLE TO EVERYONE)
 		'role' => '' //Role Name
 	],
 	'group2' => [
-		'id' => ['1234', '1234'], // Corp/Alliance/Player ID
+		'id' => ['1234', '1234'], // Corp/Alliance/Player ID/(PUTTING 1234 IS A CATCH ALL, IT WILL ASSIGN THAT ROLE TO EVERYONE)
 		'role' => '' //Role Name
 	],
 ];

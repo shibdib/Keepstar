@@ -196,6 +196,10 @@ $app->get('/auth/', function () use ($app, $config, $log) {
 					$newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
 				}
 
+                if (strlen($newNick) >= 32) {
+                    $newNick = mb_strimwidth($newNick, 0, 32);
+                }
+
 				$restcord->guild->modifyGuildMember([
 					'guild.id' => (int) $config['discord']['guildId'],
 					'user.id' => (int) $_SESSION['user_id'],
@@ -226,6 +230,10 @@ $app->get('/auth/', function () use ($app, $config, $log) {
 					'user.id' => (int) $_SESSION['user_id'], 'nick' => $newNick
 				]);
 			} else {
+                if (strlen($eveName) >= 32) {
+                    $eveName = mb_strimwidth($eveName, 0, 32);
+                }
+
 				$restcord->guild->modifyGuildMember([
 					'guild.id' => (int) $config['discord']['guildId'],
 					'user.id' => (int) $_SESSION['user_id'],

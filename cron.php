@@ -150,6 +150,10 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 						$newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
 					}
 
+					if (strlen($newNick) >= 32) {
+					    $newNick = mb_strimwidth($newNick, 0, 32);
+                    }
+
 					$restcord->guild->modifyGuildMember([
 						'guild.id' => (int) $config['discord']['guildId'],
 						'user.id' => (int) $discordID,
@@ -176,12 +180,19 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 					$newNick = '[' . $corporationData['ticker'] . '] ' . trim($memberDetails->user->username);
 				}
 
+                if (strlen($newNick) >= 32) {
+                    $newNick = mb_strimwidth($newNick, 0, 32);
+                }
+
 				$restcord->guild->modifyGuildMember([
 					'guild.id' => (int) $config['discord']['guildId'],
 					'user.id' => (int) $discordId,
 					'nick' => $newNick
 				]);
 			} else {
+                if (strlen($eveName) >= 32) {
+                    $eveName = mb_strimwidth($eveName, 0, 32);
+                }
 				$restcord->guild->modifyGuildMember([
 					'guild.id' => (int) $config['discord']['guildId'],
 					'user.id' => (int) $discordID,

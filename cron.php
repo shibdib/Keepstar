@@ -320,7 +320,7 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 
 				foreach($roles as $role) {
 					if($role->name === $authGroup['role']) {
-						if(((isset($characterData['corporation_id']) && !in_array($characterData['corporation_id'], $id)) && (isset($characterData['alliance_id']) && !in_array($characterData['alliance_id'], $id)) && !in_array($characterID, $id) && !in_array('1234', $id)) && in_array($role->id, $member->roles)) {
+						if(((isset($characterData['corporation_id']) && !in_array($characterData['corporation_id'], $id)) && ((isset($characterData['alliance_id']) && !in_array($characterData['alliance_id'], $id)) || !isset($characterData['alliance_id'])) && !in_array($characterID, $id) && !in_array('1234', $id)) && in_array($role->id, $member->roles)) {
 							$removeTheseRoles[] = (int) $role->id;
 
 							if((int) $config['discord']['logChannel'] !== 0) {

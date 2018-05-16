@@ -85,7 +85,7 @@ $app->get('/auth/', function () use ($app, $config, $log) {
 
     if (!isset($_GET['code'])) {
         // If we don't have a code yet, we need to make the link
-        $scopes = 'bot';
+        $scopes = 'identify%20guilds.join';
         $discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
 
         $app->render('discord.twig', [
@@ -104,16 +104,24 @@ $app->get('/auth/', function () use ($app, $config, $log) {
         ]);
 
         //Get guild member
-        $guildMember = $restcord->guild->getGuildMember([
-            'guild.id' => (int)$config['discord']['guildId'],
-            'user.id' => (int)$_SESSION['user_id']
-        ]);
-
-        if (!$guildMember) {
-            $app->render('notinserver.twig', [
-                'discordLink' => $config['discord']['inviteLink']
+        try {
+            $restcord->guild->getGuildMember([
+                'guild.id' => (int)$config['discord']['guildId'],
+                'user.id' => (int)$_SESSION['user_id']
             ]);
-            return;
+        } catch (Exception $e) {
+            try {
+                $restcord->guild->addGuildMember([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'access_token' => $_SESSION['auth_token']
+                ]);
+            } catch (Exception $e) {
+                $app->render('notinserver.twig', [
+                    'discordLink' => $config['discord']['inviteLink']
+                ]);
+                return;
+            }
         }
 
         $code = $_SESSION['eveCode'];

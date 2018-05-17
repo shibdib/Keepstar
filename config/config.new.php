@@ -2,6 +2,12 @@
 
 $config = [];
 
+// Auth
+$config['auth'] = [
+    'title' => 'EVE Online', // Alliance/Corp/Group Name
+    'admin' => 0 // The In-Game characterID of the admin
+];
+
 // CREST
 $config['sso'] = [
 	'clientID' => '', // https://developers.eveonline.com/
@@ -34,6 +40,14 @@ $config['groups'] = [
 		'id' => ['1234', '1234'], // Corp/Alliance/Player ID/(PUTTING 1234 IS A CATCH ALL, IT WILL ASSIGN THAT ROLE TO EVERYONE)
 		'role' => '' //Role Name
 	],
+];
+
+// Additional Modules
+$config['pings'] = [ // Send announcements to various discord channels
+    'enable' => false,
+    'pingChannel' => 0, // Channel ID that pings default to
+    'pingRole' => '', // Discord role that can send pings
+    'append' => '=== Ping Sent Via Keepstar Auth ===', // All pings will have this line added to the footer
 ];
 
 // Site IGNORE EVERYTHING BELOW THIS LINE

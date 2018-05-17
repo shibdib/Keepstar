@@ -25,9 +25,6 @@ function url($clientid, $redirect, $scope)
 // Get code and initialize the variables
 function init($code, $redirect, $clientid, $clientsecretid)
 {
-$code = $_GET['code'];
-$data = "grant_type=authorization_code&code=$code&redirect_uri=$redirect&client_id=$clientid&client_secret=$clientsecretid";
-
 // Get authorization code by posting to discord's API
 $response = $GLOBALS['http']->request('POST', '/api/oauth2/token', [
 			'form_params' => [

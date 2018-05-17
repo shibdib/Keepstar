@@ -5,24 +5,34 @@
 <head>
     <title>Discord Authenticator</title>
     <meta name="viewport" content="width=device-width">
-    <link rel="stylesheet" href="https://djyhxgczejc94.cloudfront.net/frameworks/bootstrap/3.0.0/themes/cirrus/bootstrap.min.css">
+    <link rel="stylesheet"
+          href="https://djyhxgczejc94.cloudfront.net/frameworks/bootstrap/3.0.0/themes/cirrus/bootstrap.min.css">
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+        var delete_cookie = function (name) {
+            document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        };
+        delete_cookie('eveCode');
+    </script>
     <style type="text/css">
         /* Space out content a bit */
         body {
             padding-top: 20px;
             padding-bottom: 20px;
         }
+
         /* Everything but the jumbotron gets side spacing for mobile first views */
         .header, .marketing, .footer {
             padding-left: 15px;
             padding-right: 15px;
         }
+
         /* Custom page header */
         .header {
             border-bottom: 1px solid #e5e5e5;
         }
+
         /* Make the masthead heading the same height as the navigation */
         .header h3 {
             margin-top: 0;
@@ -30,38 +40,46 @@
             line-height: 40px;
             padding-bottom: 19px;
         }
+
         /* Custom page footer */
         .footer {
             padding-top: 19px;
             color: #777;
             border-top: 1px solid #e5e5e5;
         }
+
         /* Customize container */
-        @media(min-width: 768px) {
+        @media (min-width: 768px) {
             .container {
                 max-width: 730px;
             }
         }
+
         .container-narrow > hr {
             margin: 30px 0;
         }
+
         /* Main marketing message and sign up button */
         .jumbotron {
             text-align: center;
             border-bottom: 1px solid #e5e5e5;
-            color: #0D191D;
         }
+
         .jumbotron .btn {
             font-size: 21px;
             padding: 14px 24px;
+            color: #0D191D;
         }
+
         /* Supporting marketing content */
         .marketing {
             margin: 40px 0;
         }
+
         .marketing p + h4 {
             margin-top: 28px;
         }
+
         /* Responsive: Portrait tablets and up */
         @media screen and(min-width: 768px) {
             /* Remove the padding we set earlier */
@@ -69,10 +87,12 @@
                 padding-left: 0;
                 padding-right: 0;
             }
+
             /* Space out the masthead */
             .header {
                 margin-bottom: 30px;
             }
+
             /* Remove the bottom border on the jumbotron for visual effect */
             .jumbotron {
                 border-bottom: 0;
@@ -87,12 +107,24 @@
         <ul class="nav nav-pills pull-right"></ul>
     </div>
     <div class="jumbotron">
-        <h1>Auth Successful</h1>
-        <p class="lead">Roles Added</p>
-        <p>You should now have roles on the server!</p>
-        <p>
-            <a class="btn btn-outline-success" href="/auth/" role="button">Return to Dashboard</a>
-        </p>
+        <h2>Send a Discord Ping</h2>
+        <form action="/ping/" method="get">
+            <div class="form-group">
+                <label for="channel">ChannelID (Leave for default)</label>
+                <input type="text" class="form-control" id="channel" name="channel" placeholder="{{ config['pings']['pingChannel'] }}" value="{{ config['pings']['pingChannel'] }}">
+            </div>
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea class="form-control" id="message" name="message" rows="8"></textarea>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="everyone" name="everyone">
+                <label class="form-check-label" for="everyone">
+                    Send to @everyone
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Send</button>
+        </form>
     </div>
 </div>
 <!-- /container -->

@@ -16,6 +16,11 @@ function getUser($discordId)
     return dbQuery('SELECT * FROM authed WHERE `discordID` = :discordID', array(':discordID' => $discordId));
 }
 
+function getUserWithEve($characterID)
+{
+    return dbQuery('SELECT * FROM authed WHERE `characterID` = :characterID', array(':characterID' => $characterID));
+}
+
 function deleteUser($id)
 {
     dbQueryRow('DELETE from authed WHERE `id` = :id', array(':id' => $id));

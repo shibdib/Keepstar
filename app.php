@@ -5,8 +5,8 @@ define('BASEDIR', __DIR__);
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once(BASEDIR . '/config/config.php');
-require_once(BASEDIR . '/vendor/autoload.php');
+require_once BASEDIR . '/config/config.php';
+require_once BASEDIR . '/vendor/autoload.php';
 
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
@@ -23,7 +23,7 @@ $app->view(new \Slim\Views\Twig());
 
 // Load libraries
 foreach (glob(BASEDIR . '/libraries/*.php') as $lib) {
-    require_once($lib);
+    require_once $lib;
 }
 
 // Ensure DB Is Created
@@ -31,7 +31,7 @@ createAuthDb();
 
 // Convert mysql if needed
 if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')) {
-    require_once(BASEDIR . '/tools/mysqlConverter.php');
+    require_once BASEDIR . '/tools/mysqlConverter.php';
     convertMysql($config);
 }
 
@@ -235,7 +235,7 @@ $app->get('/discord/', function () use ($app, $config, $log) {
         if (($config['discord']['enforceInGameName'] || $config['discord']['addCorpTicker']) && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {
             if ($config['discord']['enforceInGameName'] && $config['discord']['addCorpTicker']) {
                 $newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
-                if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
+                if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && null !== $allianceTicker) {
                     $newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
                 }
                 if (strlen($newNick) >= 32) {
@@ -253,7 +253,7 @@ $app->get('/discord/', function () use ($app, $config, $log) {
                 ]);
                 if ($memberDetails->nick) {
                     $searchstring = '[' . $corporationData['ticker'] . ']';
-                    if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
+                    if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && null !== $allianceTicker) {
                         $searchstring = $allianceTicker . ' [' . $corporationData['ticker'] . ']';
                     }
                     $discordNick = str_replace($searchstring, '', $memberDetails->nick);
@@ -418,31 +418,30 @@ $app->get('/ping/', function () use ($app, $config, $log) {
             'channel.id' => (int)$_GET['channel'],
             'content' => $content,
             'embed' => [
-                "title" => 'Incoming Ping',
-                "description" => 'Ping From: ' . $characterName,
-                "color" => 14290439,
-                "footer" => [
-                    "icon_url" => "https://webimg.ccpgamescdn.com/kvd74o0q2fjg/1M08UMgc7y8u6sQcikSuqk/6ef1923a91e38e800fb3bfca575a23c0/UPDATES_PALATINE.png_w=1280&fm=jpg",
-                    "text" => $config['pings']['append']
+                'title' => 'Incoming Ping',
+                'description' => 'Ping From: ' . $characterName,
+                'color' => 14290439,
+                'footer' => [
+                    'icon_url' => 'https://webimg.ccpgamescdn.com/kvd74o0q2fjg/1M08UMgc7y8u6sQcikSuqk/6ef1923a91e38e800fb3bfca575a23c0/UPDATES_PALATINE.png_w=1280&fm=jpg',
+                    'text' => $config['pings']['append']
                 ],
-                "thumbnail" => [
-                    "url" => 'https://image.eveonline.com/Character/' . $characterID . '_32.jpg'
+                'thumbnail' => [
+                    'url' => 'https://image.eveonline.com/Character/' . $characterID . '_32.jpg'
                 ],
-                "fields" => [
+                'fields' => [
                     [
-                        "name" => "-",
-                        "value" => $_GET['message']
+                        'name' => '-',
+                        'value' => $_GET['message']
                     ]
                 ]
             ]
         ]);
         echo "<head><meta http-equiv='refresh' content='0; url=/auth/' /></head>";
         return;
-    } else {
-        $app->render('ping.twig', [
-            'config' => $config
-        ]);
     }
+    $app->render('ping.twig', [
+        'config' => $config
+    ]);
 });
 
 $app->run();

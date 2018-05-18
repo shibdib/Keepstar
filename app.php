@@ -12,9 +12,11 @@ use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
 use RestCord\DiscordClient;
 
+// Setup Logger
 $log = new Logger('DScan');
 $log->pushHandler(new RotatingFileHandler(__DIR__ . '/log/Keepstar.log', Logger::NOTICE));
 
+// Setup Slim
 $app = new \Slim\Slim($config['slim']);
 $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware());
 $app->view(new \Slim\Views\Twig());
@@ -24,17 +26,16 @@ foreach (glob(BASEDIR . '/libraries/*.php') as $lib) {
     require_once($lib);
 }
 
-//Ensure DB Is Created
+// Ensure DB Is Created
 createAuthDb();
 
-//Convert mysql if needed
+// Convert mysql if needed
 if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')) {
     require_once(BASEDIR . '/tools/mysqlConverter.php');
-
     convertMysql($config);
 }
 
-//add a check for old configs
+//A dd a check for old configs
 if (!isset($config['firetail'])) {
     $config['firetail']['active'] = False;
 }
@@ -68,13 +69,14 @@ $app->get('/', function () use ($app, $config) {
     ]);
 });
 
+// Dashboard
 $app->get('/auth/', function () use ($app, $config, $log) {
     if (isset($_GET['code']) && !isset($_SESSION['eveCode'])) {
         $_SESSION['eveCode'] = $_GET['code'];
         $url = $config['sso']['callbackURL'];
         echo "<head><meta http-equiv='refresh' content='0; url=$url' /></head>";
         return;
-    } else if (isset($_GET['code'])) {
+    } else if (isset($_GET['code']) && isset($_SESSION['eveCode'])) {
         $_SESSION['discordCode'] = $_GET['code'];
         echo "<head><meta http-equiv='refresh' content='0; url=/discord/' /></head>";
         return;
@@ -94,24 +96,21 @@ $app->get('/auth/', function () use ($app, $config, $log) {
         $verifyURL = 'https://login.eveonline.com/oauth/verify';
         $_SESSION['eveData'] = json_decode(sendData($verifyURL, [], ["Authorization: Bearer {$accessToken}"]));
     }
-    $data = $_SESSION['eveData'];
-    $characterID = $data->CharacterID;
-    $_SESSION['characterID'] = $characterID;
+    $characterID = $_SESSION['eveData']->CharacterID;
     $characterData = characterDetails($characterID);
     $corporationID = $characterData['corporation_id'];
-    $_SESSION['corporationID'] = $corporationID;
     $corporationData = corporationDetails($corporationID);
     $corporationName = $corporationData['name'];
     $eveName = trim($characterData['name']);
-    $allianceName = null;
     if (!isset($characterData['alliance_id'])) {
         $allianceID = 1;
-        $allianceTicker = null;
     } else {
         $allianceID = $characterData['alliance_id'];
-        $allianceData = allianceDetails($allianceID);
-        $allianceName = $allianceData['name'];
     }
+    // Set some session helpers
+    $_SESSION['characterID'] = $characterID;
+    $_SESSION['characterName'] = $eveName;
+    $_SESSION['corporationID'] = $corporationID;
     $_SESSION['allianceID'] = $allianceID;
     $imageURL = 'https://image.eveonline.com/Character/' . $characterID . '_256.jpg';
     // Check if user can ping
@@ -132,12 +131,11 @@ $app->get('/auth/', function () use ($app, $config, $log) {
             ]);
             foreach ($roles as $role) {
                 if ($role->name == $config['pings']['pingRole']) {
-                    if (in_array((int)$role->id, $memberRoles)) {
+                    if (in_array((int)$role->id, $memberRoles, true)) {
                         $canPing = true;
                         break;
-                    } else {
-                        break;
                     }
+                    break;
                 }
             }
         }
@@ -146,33 +144,30 @@ $app->get('/auth/', function () use ($app, $config, $log) {
         'image' => $imageURL,
         'name' => $eveName,
         'corp' => $corporationName,
-        'alliance' => $allianceName,
         'canPing' => $canPing,
         'config' => $config
     ]);
 });
 
+// Discord roles
 $app->get('/discord/', function () use ($app, $config, $log) {
     if (!isset($_SESSION['discordCode'])) {
         // If we don't have a code yet, we need to make the link
         $scopes = 'identify%20guilds.join';
         $discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
-
         $app->render('discord.twig', [
             'botToken' => $config['discord']['botToken'],
             'discordLink' => $discordLink
         ]);
     } else {
         $code = $_SESSION['discordCode'];
-
         init($code, $config['discord']['redirectUri'], $config['discord']['clientId'], $config['discord']['clientSecret']);
         get_user();
-
         $restcord = new DiscordClient([
             'token' => $config['discord']['botToken']
         ]);
 
-        //Get guild member
+        // Check if user is in the server and add them if not
         try {
             $restcord->guild->getGuildMember([
                 'guild.id' => (int)$config['discord']['guildId'],
@@ -212,15 +207,12 @@ $app->get('/discord/', function () use ($app, $config, $log) {
             }
         }
 
+        // Get some EVE info
         $characterID = $_SESSION['characterID'];
         $characterData = characterDetails($characterID);
-
         $corporationID = $characterData['corporation_id'];
         $corporationData = corporationDetails($corporationID);
-
-        $eveName = trim($characterData['name']);
-        $_SESSION['characterName'] = $eveName;
-
+        $eveName = $_SESSION['characterName'];
         if ($_SESSION['allianceID'] !== 1) {
             $allianceData = allianceDetails($_SESSION['allianceID']);
             $allianceTicker = $allianceData['ticker'];
@@ -232,28 +224,23 @@ $app->get('/discord/', function () use ($app, $config, $log) {
         $roles = $restcord->guild->getGuildRoles([
             'guild.id' => $config['discord']['guildId']
         ]);
-
         $currentGuild = $restcord->guild->getGuild([
             'guild.id' => (int)$config['discord']['guildId']
         ]);
-
         // To keep compatible with older config files
         if (!isset($config['discord']['addCorpTicker'])) {
             $config['discord']['addCorpTicker'] = $config['discord']['addTicker'];
         }
-
+        // Handle new nicknames
         if (($config['discord']['enforceInGameName'] || $config['discord']['addCorpTicker']) && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {
             if ($config['discord']['enforceInGameName'] && $config['discord']['addCorpTicker']) {
                 $newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
-
                 if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
                     $newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
                 }
-
                 if (strlen($newNick) >= 32) {
                     $newNick = mb_strimwidth($newNick, 0, 32);
                 }
-
                 $restcord->guild->modifyGuildMember([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
@@ -264,21 +251,17 @@ $app->get('/discord/', function () use ($app, $config, $log) {
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id']
                 ]);
-
                 if ($memberDetails->nick) {
                     $searchstring = '[' . $corporationData['ticker'] . ']';
-
                     if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
                         $searchstring = $allianceTicker . ' [' . $corporationData['ticker'] . ']';
                     }
-
                     $discordNick = str_replace($searchstring, '', $memberDetails->nick);
                     $cleanNick = trim($discordNick);
                     $newNick = '[' . $corporationData['ticker'] . '] ' . $cleanNick;
                 } else {
                     $newNick = '[' . $corporationData['ticker'] . '] ' . trim($memberDetails->user->username);
                 }
-
                 $restcord->guild->modifyGuildMember([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick
@@ -287,7 +270,6 @@ $app->get('/discord/', function () use ($app, $config, $log) {
                 if (strlen($eveName) >= 32) {
                     $eveName = mb_strimwidth($eveName, 0, 32);
                 }
-
                 $restcord->guild->modifyGuildMember([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
@@ -296,6 +278,7 @@ $app->get('/discord/', function () use ($app, $config, $log) {
             }
         }
 
+        // Handle role assignment
         foreach ($config['groups'] as $authGroup) {
             if (is_array($authGroup['id'])) {
                 $id = $authGroup['id'];
@@ -303,9 +286,7 @@ $app->get('/discord/', function () use ($app, $config, $log) {
                 $id = [];
                 $id[] = $authGroup['id'];
             }
-
             $role = null;
-
             // General "Authenticated" Role
             if (in_array('1234', $id)) {
                 foreach ($roles as $role) {
@@ -313,22 +294,18 @@ $app->get('/discord/', function () use ($app, $config, $log) {
                         break;
                     }
                 }
-
                 $restcord->guild->addGuildMemberRole([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
                     'role.id' => (int)$role->id
                 ]);
-
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage([
                         'channel.id' => (int)$config['discord']['logChannel'],
                         'content' => $eveName . ' has been added to the role ' . $role->name
                     ]);
                 }
-
                 $access[] = 'character';
-
                 continue;
             }
 
@@ -339,74 +316,62 @@ $app->get('/discord/', function () use ($app, $config, $log) {
                         break;
                     }
                 }
-
                 $restcord->guild->addGuildMemberRole([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
                     'role.id' => (int)$role->id
                 ]);
-
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage([
                         'channel.id' => (int)$config['discord']['logChannel'],
                         'content' => $eveName . ' has been added to the role ' . $role->name
                     ]);
                 }
-
                 $access[] = 'character';
-
                 continue;
             }
 
-            // Autnetification by allianceID
+            // Authentication by allianceID
             if (in_array($_SESSION['allianceID'], $id)) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup['role']) {
                         break;
                     }
                 }
-
                 $restcord->guild->addGuildMemberRole([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
                     'role.id' => (int)$role->id
                 ]);
-
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage([
                         'channel.id' => (int)$config['discord']['logChannel'],
                         'content' => $eveName . ' has been added to the role ' . $role->name
                     ]);
                 }
-
                 $access[] = 'alliance';
-
                 continue;
             }
 
-            // Authentification by corporationID
+            // Authentication by corporationID
             if (in_array($corporationID, $id)) {
                 foreach ($roles as $role) {
                     if ($role->name == $authGroup['role']) {
                         break;
                     }
                 }
-
                 $restcord->guild->addGuildMemberRole([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
                     'role.id' => (int)$role->id
                 ]);
-
                 if ((int)$config['discord']['logChannel'] !== 0) {
                     $restcord->channel->createMessage([
                         'channel.id' => (int)$config['discord']['logChannel'],
                         'content' => $eveName . ' has been added to the role ' . $role->name
                     ]);
                 }
-
                 $access[] = 'corp';
-
                 continue;
             }
         }
@@ -424,7 +389,6 @@ $app->get('/discord/', function () use ($app, $config, $log) {
             firetailEntry($characterID, (int)$_SESSION['user_id'], $refreshToken, $config['firetail']['path']);
         }
 
-
         if (count($access) > 0) {
             //if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
             $_SESSION['discordCode'] = null;
@@ -436,6 +400,7 @@ $app->get('/discord/', function () use ($app, $config, $log) {
     }
 });
 
+// Ping module
 $app->get('/ping/', function () use ($app, $config, $log) {
     if (isset($_GET['message'])) {
         $restcord = new DiscordClient([

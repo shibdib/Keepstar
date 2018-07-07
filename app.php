@@ -20,357 +20,464 @@ $app->add(new \Zeuxisoo\Whoops\Provider\Slim\WhoopsMiddleware());
 $app->view(new \Slim\Views\Twig());
 
 // Load libraries
-foreach(glob(BASEDIR . '/libraries/*.php') as $lib) {
-	require_once($lib);
+foreach (glob(BASEDIR . '/libraries/*.php') as $lib) {
+    require_once($lib);
 }
 
 //Ensure DB Is Created
 createAuthDb();
 
 //Convert mysql if needed
-if(isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')) {
-	require_once(BASEDIR . '/tools/mysqlConverter.php');
+if (isset($config['mysql']['password']) && !file_exists(__DIR__ . '/tools/.blocker')) {
+    require_once(BASEDIR . '/tools/mysqlConverter.php');
 
-	convertMysql($config);
+    convertMysql($config);
 }
 
 //add a check for old configs
-if(!isset($config['firetail'])) {
-	$config['firetail']['active'] = False;
+if (!isset($config['firetail'])) {
+    $config['firetail']['active'] = False;
 }
 
 // Routes
 $app->get('/admin/', function () use ($app, $config) {
-	if(!getKeepstar('botStarted')) {
-		$app->render('admin.twig', [
-			'botToken' => $config['discord']['botToken']
-		]);
+    if (!getKeepstar('botStarted')) {
+        $app->render('admin.twig', [
+            'botToken' => $config['discord']['botToken']
+        ]);
 
-		insertKeepstar('botStarted', 'True');
-	} else {
-		echo 'You have no reason to go here.';
-	}
+        insertKeepstar('botStarted', 'True');
+    } else {
+        echo 'You have no reason to go here.';
+    }
 });
 
 $app->get('/', function () use ($app, $config) {
-	//Clear out session just incase
-	$_SESSION = [];
-
-	if(isset($_COOKIE[session_name()])) {
-		setcookie(session_name(), '', time() - 42000, '/');
-	}
-
-	//Check if keepstar is linked to firetail
-	if($config['firetail']['active'] === true) {
-		$scopes = str_replace(' ', '%20', $config['firetail']['scopes']);
-		$url = 'https://login.eveonline.com/oauth/authorize?response_type=code&scope=' . $scopes . '&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];
-	} else {
-		$url = 'https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];
-	}
-
-	$app->render('index.twig', [
-		'crestURL' => $url
-	]);
+    //Clear out session just incase
+    $_SESSION = [];
+    if (isset($_COOKIE[session_name()])) {
+        setcookie(session_name(), '', time() - 42000, '/');
+    }
+    if (!isset($config['auth']['title'])) {
+        $config['auth']['title'] = 'Keepstar Auth';
+    }
+    $url = 'https://login.eveonline.com/oauth/authorize?response_type=code&redirect_uri=' . $config['sso']['callbackURL'] . '&client_id=' . $config['sso']['clientID'];
+    $app->render('index.twig', [
+        'config' => $config,
+        'crestURL' => $url
+    ]);
 });
 
 $app->get('/auth/', function () use ($app, $config, $log) {
-	if(isset($_GET['code']) && !isset($_SESSION['eveCode'])) {
-		$_SESSION['eveCode'] = $_GET['code'];
-		$url = $config['sso']['callbackURL'];
+    if (isset($_GET['code']) && !isset($_SESSION['eveCode'])) {
+        $_SESSION['eveCode'] = $_GET['code'];
+        $url = $config['sso']['callbackURL'];
+        echo "<head><meta http-equiv='refresh' content='0; url=$url' /></head>";
+        return;
+    } else if (isset($_GET['code'])) {
+        $_SESSION['discordCode'] = $_GET['code'];
+        echo "<head><meta http-equiv='refresh' content='0; url=/discord/' /></head>";
+        return;
+    }
+    if (!isset($_SESSION['eveData'])) {
+        $code = $_SESSION['eveCode'];
+        $tokenURL = 'https://login.eveonline.com/oauth/token';
+        $base64 = base64_encode($config['sso']['clientID'] . ':' . $config['sso']['secretKey']);
+        $data = json_decode(sendData($tokenURL, [
+            'grant_type' => 'authorization_code',
+            'code' => $code
+        ], [
+            "Authorization: Basic {$base64}"
+        ]));
+        $accessToken = $data->access_token;
+        // Verify Token
+        $verifyURL = 'https://login.eveonline.com/oauth/verify';
+        $_SESSION['eveData'] = json_decode(sendData($verifyURL, [], ["Authorization: Bearer {$accessToken}"]));
+    }
+    $data = $_SESSION['eveData'];
+    $characterID = $data->CharacterID;
+    $_SESSION['characterID'] = $characterID;
+    $characterData = characterDetails($characterID);
+    $corporationID = $characterData['corporation_id'];
+    $_SESSION['corporationID'] = $corporationID;
+    $corporationData = corporationDetails($corporationID);
+    $corporationName = $corporationData['name'];
+    $eveName = trim($characterData['name']);
+    $allianceName = null;
+    if (!isset($characterData['alliance_id'])) {
+        $allianceID = 1;
+        $allianceTicker = null;
+    } else {
+        $allianceID = $characterData['alliance_id'];
+        $allianceData = allianceDetails($allianceID);
+        $allianceName = $allianceData['name'];
+    }
+    $_SESSION['allianceID'] = $allianceID;
+    $imageURL = 'https://image.eveonline.com/Character/' . $characterID . '_256.jpg';
+    // Check if user can ping
+    $canPing = null;
+    if (isset($config['pings']['enabled']) && $config['pings']['enabled'] === true) {
+        $authInfo = getUserWithEve($characterID);
+        if (isset($authInfo[0]['discordID'])) {
+            $restcord = new DiscordClient([
+                'token' => $config['discord']['botToken']
+            ]);
+            $memberInfo = $restcord->guild->getGuildMember([
+                'guild.id' => (int)$config['discord']['guildId'],
+                'user.id' => (int)$authInfo[0]['discordID']
+            ]);
+            $memberRoles = $memberInfo->roles;
+            $roles = $restcord->guild->getGuildRoles([
+                'guild.id' => $config['discord']['guildId']
+            ]);
+            foreach ($roles as $role) {
+                if ($role->name == $config['pings']['pingRole']) {
+                    if (in_array((int)$role->id, $memberRoles)) {
+                        $canPing = true;
+                        break;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    $app->render('dashboard.twig', [
+        'image' => $imageURL,
+        'name' => $eveName,
+        'corp' => $corporationName,
+        'alliance' => $allianceName,
+        'canPing' => $canPing,
+        'config' => $config
+    ]);
+});
 
-		echo "<head><meta http-equiv='refresh' content='0; url=$url' /></head>";
+$app->get('/discord/', function () use ($app, $config, $log) {
+    if (!isset($_SESSION['discordCode'])) {
+        // If we don't have a code yet, we need to make the link
+        $scopes = 'identify%20guilds.join';
+        $discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
 
-		return;
-	}
+        $app->render('discord.twig', [
+            'botToken' => $config['discord']['botToken'],
+            'discordLink' => $discordLink
+        ]);
+    } else {
+        $code = $_SESSION['discordCode'];
 
-	if(!isset($_GET['code'])) {
-		// If we don't have a code yet, we need to make the link
-		$scopes = 'identify%20guilds';
-		$discordLink = url($config['discord']['clientId'], $config['discord']['redirectUri'], $scopes);
+        init($code, $config['discord']['redirectUri'], $config['discord']['clientId'], $config['discord']['clientSecret']);
+        get_user();
 
-		$app->render('discord.twig', [
-			'botToken' => $config['discord']['botToken'],
-			'discordLink' => $discordLink
-		]);
-	} else {
-		// If we do have a code, use it to get a token
-		$code = $_GET['code'];
+        $restcord = new DiscordClient([
+            'token' => $config['discord']['botToken']
+        ]);
 
-		init($code, $config['discord']['redirectUri'], $config['discord']['clientId'], $config['discord']['clientSecret']);
-		get_user();
+        //Get guild member
+        try {
+            $restcord->guild->getGuildMember([
+                'guild.id' => (int)$config['discord']['guildId'],
+                'user.id' => (int)$_SESSION['user_id']
+            ]);
+        } catch (Exception $e) {
+            try {
+                $restcord->guild->addGuildMember([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'access_token' => $_SESSION['auth_token']
+                ]);
+            } catch (Exception $e) {
+                $app->render('notinserver.twig', [
+                    'discordLink' => $config['discord']['inviteLink']
+                ]);
+                return;
+            }
+        }
 
-		$guilds = get_guilds();
-		$guildIds = [];
+        //Make sure bots nick is set
+        if (isset($config['discord']['botNick'])) {
+            /**
+             * Since the restcord library changes this all the damn time,
+             * we have to add a workaround ...
+             */
+            try {
+                $restcord->guild->modifyCurrentUserNick([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'nick' => $config['discord']['botNick']
+                ]);
+            } catch (Exception $e) {
+                $restcord->guild->modifyCurrentUsersNick([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'nick' => $config['discord']['botNick']
+                ]);
+            }
+        }
 
-		foreach($guilds as $guild) {
-			$guildIds[] = $guild['id'];
-		}
+        $characterID = $_SESSION['characterID'];
+        $characterData = characterDetails($characterID);
 
-		$restcord = new DiscordClient([
-			'token' => $config['discord']['botToken']
-		]);
+        $corporationID = $characterData['corporation_id'];
+        $corporationData = corporationDetails($corporationID);
 
-		if(!in_array($config['discord']['guildId'], $guildIds, false)) {
-			$app->render('notinserver.twig', [
-				'discordLink' => $config['discord']['inviteLink']
-			]);
+        $eveName = trim($characterData['name']);
+        $_SESSION['characterName'] = $eveName;
 
-			return;
-		}
+        if ($_SESSION['allianceID'] !== 1) {
+            $allianceData = allianceDetails($_SESSION['allianceID']);
+            $allianceTicker = $allianceData['ticker'];
+        }
 
-		$code = $_SESSION['eveCode'];
+        // Now check if the person is in a corp or alliance on the blue / allowed list
+        // Whatever ID matches whatever group, they get added to. Discord role ordering decides what they can and can't see
+        $access = [];
+        $roles = $restcord->guild->getGuildRoles([
+            'guild.id' => $config['discord']['guildId']
+        ]);
 
-		//Make sure bots nick is set
-		if(isset($config['discord']['botNick'])) {
-			/**
-			 * Since the restcord library changes this all the damn time,
-			 * we have to add a workaround ...
-			 */
-			try {
-				$restcord->guild->modifyCurrentUserNick([
-					'guild.id' => (int)$config['discord']['guildId'],
-					'nick' => $config['discord']['botNick']
-				]);
-			} catch (Exception $e){
-				$restcord->guild->modifyCurrentUsersNick([
-					'guild.id' => (int)$config['discord']['guildId'],
-					'nick' => $config['discord']['botNick']
-				]);
-			}
-		}
+        $currentGuild = $restcord->guild->getGuild([
+            'guild.id' => (int)$config['discord']['guildId']
+        ]);
 
-		$tokenURL = 'https://login.eveonline.com/oauth/token';
-		$base64 = base64_encode($config['sso']['clientID'] . ':' . $config['sso']['secretKey']);
+        // To keep compatible with older config files
+        if (!isset($config['discord']['addCorpTicker'])) {
+            $config['discord']['addCorpTicker'] = $config['discord']['addTicker'];
+        }
 
-		$data = json_decode(sendData($tokenURL, [
-			'grant_type' => 'authorization_code',
-			'code' => $code
-		], [
-			"Authorization: Basic {$base64}"
-		]));
+        if (($config['discord']['enforceInGameName'] || $config['discord']['addCorpTicker']) && (int)$currentGuild->owner_id !== (int)$_SESSION['user_id']) {
+            if ($config['discord']['enforceInGameName'] && $config['discord']['addCorpTicker']) {
+                $newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
 
-		$accessToken = $data->access_token;
+                if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
+                    $newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
+                }
 
-		// Verify Token
-		$verifyURL = 'https://login.eveonline.com/oauth/verify';
-		$data = json_decode(sendData($verifyURL, [], ["Authorization: Bearer {$accessToken}"]));
+                if (strlen($newNick) >= 32) {
+                    $newNick = mb_strimwidth($newNick, 0, 32);
+                }
 
-		$characterID = $data->CharacterID;
-		$characterData = characterDetails($characterID);
+                $restcord->guild->modifyGuildMember([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'nick' => $newNick
+                ]);
+            } else if (!$config['discord']['enforceInGameName'] && $config['discord']['addCorpTicker']) {
+                $memberDetails = $restcord->guild->getGuildMember([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id']
+                ]);
 
-		$corporationID = $characterData['corporation_id'];
-		$corporationData = corporationDetails($corporationID);
+                if ($memberDetails->nick) {
+                    $searchstring = '[' . $corporationData['ticker'] . ']';
 
-		$eveName = trim($characterData['name']);
+                    if (isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
+                        $searchstring = $allianceTicker . ' [' . $corporationData['ticker'] . ']';
+                    }
 
-		$currentGuild = $restcord->guild->getGuild([
-			'guild.id' => (int) $config['discord']['guildId']
-		]);
+                    $discordNick = str_replace($searchstring, '', $memberDetails->nick);
+                    $cleanNick = trim($discordNick);
+                    $newNick = '[' . $corporationData['ticker'] . '] ' . $cleanNick;
+                } else {
+                    $newNick = '[' . $corporationData['ticker'] . '] ' . trim($memberDetails->user->username);
+                }
 
-		if(!isset($characterData['alliance_id'])) {
-			$allianceID = 1;
-			$allianceTicker = null;
-		} else {
-			$allianceID = $characterData['alliance_id'];
-			$allianceData = allianceDetails($allianceID);
-			$allianceTicker = $allianceData['ticker'];
-		}
+                $restcord->guild->modifyGuildMember([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'], 'nick' => $newNick
+                ]);
+            } else {
+                if (strlen($eveName) >= 32) {
+                    $eveName = mb_strimwidth($eveName, 0, 32);
+                }
 
-		// Now check if the person is in a corp or alliance on the blue / allowed list
-		// Whatever ID matches whatever group, they get added to. Discord role ordering decides what they can and can't see
-		$access = [];
-		$roles = $restcord->guild->getGuildRoles([
-			'guild.id' => $config['discord']['guildId']
-		]);
+                $restcord->guild->modifyGuildMember([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'nick' => $eveName
+                ]);
+            }
+        }
 
-		// To keep compatible with older config files
-		if(!isset($config['discord']['addCorpTicker'])) {
-			$config['discord']['addCorpTicker'] = $config['discord']['addTicker'];
-		}
+        foreach ($config['groups'] as $authGroup) {
+            if (is_array($authGroup['id'])) {
+                $id = $authGroup['id'];
+            } else {
+                $id = [];
+                $id[] = $authGroup['id'];
+            }
 
-		if(($config['discord']['enforceInGameName'] || $config['discord']['addCorpTicker']) && (int) $currentGuild->owner_id !== (int) $_SESSION['user_id']) {
-			if($config['discord']['enforceInGameName'] && $config['discord']['addCorpTicker']) {
-				$newNick = '[' . $corporationData['ticker'] . '] ' . $eveName;
+            $role = null;
 
-				if(isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
-					$newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
-				}
+            // General "Authenticated" Role
+            if (in_array('1234', $id)) {
+                foreach ($roles as $role) {
+                    if ($role->name == $authGroup['role']) {
+                        break;
+                    }
+                }
 
-				$restcord->guild->modifyGuildMember([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'],
-					'nick' => $newNick
-				]);
-			} else if(!$config['discord']['enforceInGameName'] && $config['discord']['addCorpTicker']) {
-				$memberDetails = $restcord->guild->getGuildMember([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id']
-				]);
+                $restcord->guild->addGuildMemberRole([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'role.id' => (int)$role->id
+                ]);
 
-				if($memberDetails->nick) {
-					$searchstring = '[' . $corporationData['ticker'] . ']';
+                if ((int)$config['discord']['logChannel'] !== 0) {
+                    $restcord->channel->createMessage([
+                        'channel.id' => (int)$config['discord']['logChannel'],
+                        'content' => $eveName . ' has been added to the role ' . $role->name
+                    ]);
+                }
 
-					if(isset($config['discord']['addAllianceTicker']) && $config['discord']['addAllianceTicker'] === true && !is_null($allianceTicker)) {
-						$searchstring = $allianceTicker . ' [' . $corporationData['ticker'] . ']';
-					}
+                $access[] = 'character';
 
-					$discordNick = str_replace($searchstring, '', $memberDetails->nick);
-					$cleanNick = trim($discordNick);
-					$newNick = '[' . $corporationData['ticker'] . '] ' . $cleanNick;
-				} else {
-					$newNick = '[' . $corporationData['ticker'] . '] ' . trim($memberDetails->user->username);
-				}
+                continue;
+            }
 
-				$restcord->guild->modifyGuildMember([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'], 'nick' => $newNick
-				]);
-			} else {
-				$restcord->guild->modifyGuildMember([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'],
-					'nick' => $eveName
-				]);
-			}
-		}
+            // Authentication by characterID
+            if (in_array($characterID, $id)) {
+                foreach ($roles as $role) {
+                    if ($role->name == $authGroup['role']) {
+                        break;
+                    }
+                }
 
-		foreach($config['groups'] as $authGroup) {
-			if(is_array($authGroup['id'])) {
-				$id = $authGroup['id'];
-			} else {
-				$id = [];
-				$id[] = $authGroup['id'];
-			}
+                $restcord->guild->addGuildMemberRole([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'role.id' => (int)$role->id
+                ]);
 
-			$role = null;
+                if ((int)$config['discord']['logChannel'] !== 0) {
+                    $restcord->channel->createMessage([
+                        'channel.id' => (int)$config['discord']['logChannel'],
+                        'content' => $eveName . ' has been added to the role ' . $role->name
+                    ]);
+                }
 
-			// General "Authenticated" Role
-			if(in_array('1234', $id)) {
-				foreach($roles as $role) {
-					if($role->name == $authGroup['role']) {
-						break;
-					}
-				}
+                $access[] = 'character';
 
-				$restcord->guild->addGuildMemberRole([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'],
-					'role.id' => (int) $role->id
-				]);
+                continue;
+            }
 
-				if((int) $config['discord']['logChannel'] !== 0) {
-					$restcord->channel->createMessage([
-						'channel.id' => (int) $config['discord']['logChannel'],
-						'content' => $eveName . ' has been added to the role ' . $role->name
-					]);
-				}
+            // Autnetification by allianceID
+            if (in_array($_SESSION['allianceID'], $id)) {
+                foreach ($roles as $role) {
+                    if ($role->name == $authGroup['role']) {
+                        break;
+                    }
+                }
 
-				$access[] = 'character';
+                $restcord->guild->addGuildMemberRole([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'role.id' => (int)$role->id
+                ]);
 
-				continue;
-			}
+                if ((int)$config['discord']['logChannel'] !== 0) {
+                    $restcord->channel->createMessage([
+                        'channel.id' => (int)$config['discord']['logChannel'],
+                        'content' => $eveName . ' has been added to the role ' . $role->name
+                    ]);
+                }
 
-			// Authentication by characterID
-			if(in_array($characterID, $id)) {
-				foreach($roles as $role) {
-					if($role->name == $authGroup['role']) {
-						break;
-					}
-				}
+                $access[] = 'alliance';
 
-				$restcord->guild->addGuildMemberRole([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'],
-					'role.id' => (int) $role->id
-				]);
+                continue;
+            }
 
-				if((int) $config['discord']['logChannel'] !== 0) {
-					$restcord->channel->createMessage([
-						'channel.id' => (int) $config['discord']['logChannel'],
-						'content' => $eveName . ' has been added to the role ' . $role->name
-					]);
-				}
+            // Authentification by corporationID
+            if (in_array($corporationID, $id)) {
+                foreach ($roles as $role) {
+                    if ($role->name == $authGroup['role']) {
+                        break;
+                    }
+                }
 
-				$access[] = 'character';
+                $restcord->guild->addGuildMemberRole([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'role.id' => (int)$role->id
+                ]);
 
-				continue;
-			}
+                if ((int)$config['discord']['logChannel'] !== 0) {
+                    $restcord->channel->createMessage([
+                        'channel.id' => (int)$config['discord']['logChannel'],
+                        'content' => $eveName . ' has been added to the role ' . $role->name
+                    ]);
+                }
 
-			// Autnetification by allianceID
-			if(in_array($allianceID, $id)) {
-				foreach($roles as $role) {
-					if($role->name == $authGroup['role']) {
-						break;
-					}
-				}
+                $access[] = 'corp';
 
-				$restcord->guild->addGuildMemberRole([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'],
-					'role.id' => (int) $role->id
-				]);
+                continue;
+            }
+        }
 
-				if((int) $config['discord']['logChannel'] !== 0) {
-					$restcord->channel->createMessage([
-						'channel.id' => (int) $config['discord']['logChannel'],
-						'content' => $eveName . ' has been added to the role ' . $role->name
-					]);
-				}
+        // Make the json access list
+        $accessList = json_encode($access);
 
-				$access[] = 'alliance';
+        // Insert it all into the db
+        insertUser($characterID, (int)$_SESSION['user_id'], $accessList);
 
-				continue;
-			}
+        // If firetail link is active, insert into firetail db
+        if ($config['firetail']['active'] === true) {
+            $refreshToken = $_SESSION['auth_token'];
 
-			// Authentification by corporationID
-			if(in_array($corporationID, $id)) {
-				foreach($roles as $role) {
-					if($role->name == $authGroup['role']) {
-						break;
-					}
-				}
-
-				$restcord->guild->addGuildMemberRole([
-					'guild.id' => (int) $config['discord']['guildId'],
-					'user.id' => (int) $_SESSION['user_id'],
-					'role.id' => (int) $role->id
-				]);
-
-				if((int) $config['discord']['logChannel'] !== 0) {
-					$restcord->channel->createMessage([
-						'channel.id' => (int) $config['discord']['logChannel'],
-						'content' => $eveName . ' has been added to the role ' . $role->name
-					]);
-				}
-
-				$access[] = 'corp';
-
-				continue;
-			}
-		}
-
-		// Make the json access list
-		$accessList = json_encode($access);
-
-		// Insert it all into the db
-		insertUser($characterID, (int) $_SESSION['user_id'], $accessList);
-
-		// If firetail link is active, insert into firetail db
-		if($config['firetail']['active'] === true) {
-			$refreshToken = $data->refresh_token;
-
-			firetailEntry($characterID, (int) $_SESSION['user_id'], $refreshToken, $config['firetail']['path']);
-		}
+            firetailEntry($characterID, (int)$_SESSION['user_id'], $refreshToken, $config['firetail']['path']);
+        }
 
 
-		if(count($access) > 0) {
-			//if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
-			$app->render('authed.twig');
-		} else {
-			//if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
-			$app->render('norole.twig');
-		}
-	}
+        if (count($access) > 0) {
+            //if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
+            $_SESSION['discordCode'] = null;
+            $app->render('authed.twig');
+        } else {
+            //if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
+            $app->render('norole.twig');
+        }
+    }
+});
+
+$app->get('/ping/', function () use ($app, $config, $log) {
+    if (isset($_GET['message'])) {
+        $restcord = new DiscordClient([
+            'token' => $config['discord']['botToken']
+        ]);
+        $data = $_SESSION['eveData'];
+        $characterID = $data->CharacterID;
+        $characterData = characterDetails($characterID);
+        $characterName = $characterData['name'];
+        $content = '';
+        if (isset($_GET['everyone'])) {
+            $content = '@everyone';
+        }
+        $restcord->channel->createMessage([
+            'channel.id' => (int)$_GET['channel'],
+            'content' => $content,
+            'embed' => [
+                "title" => 'Incoming Ping',
+                "description" => 'Ping From: ' . $characterName,
+                "color" => 14290439,
+                "footer" => [
+                    "icon_url" => "https://webimg.ccpgamescdn.com/kvd74o0q2fjg/1M08UMgc7y8u6sQcikSuqk/6ef1923a91e38e800fb3bfca575a23c0/UPDATES_PALATINE.png_w=1280&fm=jpg",
+                    "text" => $config['pings']['append']
+                ],
+                "thumbnail" => [
+                    "url" => 'https://image.eveonline.com/Character/' . $characterID . '_32.jpg'
+                ],
+                "fields" => [
+                    [
+                        "name" => "-",
+                        "value" => $_GET['message']
+                    ]
+                ]
+            ]
+        ]);
+        echo "<head><meta http-equiv='refresh' content='0; url=/auth/' /></head>";
+        return;
+    } else {
+        $app->render('ping.twig', [
+            'config' => $config
+        ]);
+    }
 });
 
 $app->run();
@@ -380,7 +487,8 @@ $app->run();
  *
  * @param $input
  */
-function dd($input) {
-	var_dump($input);
-	die();
+function dd($input)
+{
+    var_dump($input);
+    die();
 }

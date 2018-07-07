@@ -150,6 +150,10 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 						$newNick = $allianceTicker . ' [' . $corporationData['ticker'] . '] ' . $eveName;
 					}
 
+					if (strlen($newNick) >= 32) {
+					    $newNick = mb_strimwidth($newNick, 0, 32);
+                    }
+
 					$restcord->guild->modifyGuildMember([
 						'guild.id' => (int) $config['discord']['guildId'],
 						'user.id' => (int) $discordID,
@@ -176,12 +180,19 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 					$newNick = '[' . $corporationData['ticker'] . '] ' . trim($memberDetails->user->username);
 				}
 
+                if (strlen($newNick) >= 32) {
+                    $newNick = mb_strimwidth($newNick, 0, 32);
+                }
+
 				$restcord->guild->modifyGuildMember([
 					'guild.id' => (int) $config['discord']['guildId'],
 					'user.id' => (int) $discordId,
 					'nick' => $newNick
 				]);
 			} else {
+                if (strlen($eveName) >= 32) {
+                    $eveName = mb_strimwidth($eveName, 0, 32);
+                }
 				$restcord->guild->modifyGuildMember([
 					'guild.id' => (int) $config['discord']['guildId'],
 					'user.id' => (int) $discordID,
@@ -309,7 +320,7 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 
 				foreach($roles as $role) {
 					if($role->name === $authGroup['role']) {
-						if(((isset($characterData['corporation_id']) && !in_array($characterData['corporation_id'], $id)) && (isset($characterData['alliance_id']) && !in_array($characterData['alliance_id'], $id)) && !in_array($characterID, $id) && !in_array('1234', $id)) && in_array($role->id, $member->roles)) {
+						if(((isset($characterData['corporation_id']) && !in_array($characterData['corporation_id'], $id)) && ((isset($characterData['alliance_id']) && !in_array($characterData['alliance_id'], $id)) || !isset($characterData['alliance_id'])) && !in_array($characterID, $id) && !in_array('1234', $id)) && in_array($role->id, $member->roles)) {
 							$removeTheseRoles[] = (int) $role->id;
 
 							if((int) $config['discord']['logChannel'] !== 0) {
@@ -382,6 +393,19 @@ foreach(array_chunk($users, 5, true) as $userSet) {
 					'user.id' => (int) $discordID
 				]);
 			}
+
+            if(isset($config['discord']['removedRole']) && $config['discord']['removedRole'] !== false) {
+                foreach ($roles as $role) {
+                    if ($role->name == $config['discord']['removedRole']) {
+                        break;
+                    }
+                }
+                $restcord->guild->addGuildMemberRole([
+                    'guild.id' => (int)$config['discord']['guildId'],
+                    'user.id' => (int)$_SESSION['user_id'],
+                    'role.id' => (int)$role->id
+                ]);
+            }
 		}
 
 		if(count($type) === 0) {

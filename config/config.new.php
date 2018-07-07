@@ -2,6 +2,12 @@
 
 $config = [];
 
+// Auth
+$config['auth'] = [
+    'title' => 'EVE Online', // Alliance/Corp/Group Name
+    'admin' => 0 // The In-Game characterID of the admin
+];
+
 // CREST
 $config['sso'] = [
 	'clientID' => '', // https://developers.eveonline.com/
@@ -17,6 +23,7 @@ $config['discord'] = [
 	'addCorpTicker' => false, // Setting this to true will add the corp ticker to the beginning of the users discord name
 	'addAllianceTicker' => false, //Setting this to true will add the alliance ticker to the beginning of the users discord name (only works if addCorpTicker is also set to true)
 	'removeUser' => False, //Setting this to true will kick the user from the server if their roles are removed (Requires the bot to have admin or kicking permissions)
+    'removedRole' => False, //Put a role name here ('role') if you'd like it to be assigned to members who have their roles removed
 	'inviteLink' => '', //Make sure it's set to never expire and set to a public channel.
 	'botToken' => '', //The bot must be a member of your server
 	'clientId' => '', //The bot must be a member of your server
@@ -26,13 +33,21 @@ $config['discord'] = [
 
 $config['groups'] = [
 	'group1' => [
-		'id' => ['1234'], // Corp/Alliance/Player ID
+		'id' => ['1234'], // Corp/Alliance/Player ID/(PUTTING 1234 IS A CATCH ALL, IT WILL ASSIGN THAT ROLE TO EVERYONE)
 		'role' => '' //Role Name
 	],
 	'group2' => [
-		'id' => ['1234', '1234'], // Corp/Alliance/Player ID
+		'id' => ['1234', '1234'], // Corp/Alliance/Player ID/(PUTTING 1234 IS A CATCH ALL, IT WILL ASSIGN THAT ROLE TO EVERYONE)
 		'role' => '' //Role Name
 	],
+];
+
+// Additional Modules
+$config['pings'] = [ // Send announcements to various discord channels
+    'enable' => false,
+    'pingChannel' => 0, // Channel ID that pings default to
+    'pingRole' => '', // Discord role that can send pings
+    'append' => '=== Ping Sent Via Keepstar Auth ===', // All pings will have this line added to the footer
 ];
 
 // Site IGNORE EVERYTHING BELOW THIS LINE

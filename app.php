@@ -131,11 +131,9 @@ $app->get('/auth/', function () use ($app, $config, $log) {
                 'guild.id' => $config['discord']['guildId']
             ]);
             foreach ($roles as $role) {
-                if ($role->name == $config['pings']['pingRole']) {
+                if (in_array($role->name, $config['pings']['pingRoles'])) {
                     if (in_array((int)$role->id, $memberRoles)) {
                         $canPing = true;
-                        break;
-                    } else {
                         break;
                     }
                 }

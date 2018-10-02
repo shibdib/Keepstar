@@ -175,12 +175,14 @@ $app->get('/discord/', function () use ($app, $config, $log) {
             ]);
         } catch (Exception $e) {
             try {
+                $log->error((string)$e);
                 $restcord->guild->addGuildMember([
                     'guild.id' => (int)$config['discord']['guildId'],
                     'user.id' => (int)$_SESSION['user_id'],
                     'access_token' => $_SESSION['auth_token']
                 ]);
             } catch (Exception $e) {
+                $log->error((string)$e);
                 $app->render('notinserver.twig', [
                     'discordLink' => $config['discord']['inviteLink']
                 ]);
@@ -390,11 +392,11 @@ $app->get('/discord/', function () use ($app, $config, $log) {
         }
 
         if (count($access) > 0) {
-            //if (isset($eveName)) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$discordId has been added to the role $role->name.");}
+            if ($eveName !== null) {$log->notice("$eveName has been added to the role $role->name.");} else {$log->notice("$characterID has been added to the role $role->name.");}
             $_SESSION['discordCode'] = null;
             $app->render('authed.twig');
         } else {
-            //if (isset($eveName)) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $discordId attempted to auth but no roles were found.");}
+            if ($eveName !== null) {$log->notice("Auth Failed - $eveName attempted to auth but no roles were found.");} else {$log->notice("Auth Failed - $characterID attempted to auth but no roles were found.");}
             $app->render('norole.twig');
         }
     }

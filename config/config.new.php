@@ -44,7 +44,7 @@ $config['groups'] = [
 
 // Additional Modules
 $config['pings'] = [ // Send announcements to various discord channels
-    'enable' => false,
+    'enabled' => false,
     'pingChannel' => 0, // Channel ID that pings default to
     'pingRole' => '', // Discord role that can send pings
     'append' => '=== Ping Sent Via Keepstar Auth ===', // All pings will have this line added to the footer

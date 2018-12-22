@@ -3,7 +3,7 @@
 function characterDetails($characterID) {
 	try {
 		// Initialize a new request for this URL
-		$ch = curl_init("https://esi.tech.ccp.is/latest/characters/{$characterID}/");
+		$ch = curl_init("https://esi.evetech.net/latest/characters/{$characterID}/");
 		// Set the options for this request
 		curl_setopt_array($ch, [
 			CURLOPT_FOLLOWLOCATION => true, // Yes, we want to follow a redirect
@@ -26,7 +26,7 @@ function characterDetails($characterID) {
 function corporationDetails($corpID) {
 	try {
 		// Initialize a new request for this URL
-		$ch = curl_init("https://esi.tech.ccp.is/latest/corporations/{$corpID}/");
+		$ch = curl_init("https://esi.evetech.net/latest/corporations/{$corpID}/");
 		// Set the options for this request
 		curl_setopt_array($ch, [
 			CURLOPT_FOLLOWLOCATION => true, // Yes, we want to follow a redirect
@@ -49,7 +49,7 @@ function corporationDetails($corpID) {
 function allianceDetails($allianceID) {
 	try {
 		// Initialize a new request for this URL
-		$ch = curl_init("https://esi.tech.ccp.is/latest/alliances/{$allianceID}/");
+		$ch = curl_init("https://esi.evetech.net/latest/alliances/{$allianceID}/");
 		// Set the options for this request
 		curl_setopt_array($ch, [
 			CURLOPT_FOLLOWLOCATION => true, // Yes, we want to follow a redirect
@@ -72,7 +72,7 @@ function allianceDetails($allianceID) {
 function serverStatus() {
 	try {
 		// Initialize a new request for this URL
-		$ch = curl_init("https://esi.tech.ccp.is/latest/status/");
+		$ch = curl_init("https://esi.evetech.net/latest/status/");
 		// Set the options for this request
 		curl_setopt_array($ch, [
 			CURLOPT_FOLLOWLOCATION => true, // Yes, we want to follow a redirect

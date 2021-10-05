@@ -28,6 +28,6 @@
     "twig/extensions": "1.5.*",
     "filp/whoops": "~1.1.10",
     "restcord/restcord": "dev-master",
-    "monolog/monolog": "2.3.2"
+    "monolog/monolog": "2.3.5"
   }
 }
